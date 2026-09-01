@@ -50,15 +50,16 @@ export function useDomNodeCount(element: HTMLElement | null): void {
 
   useEffect(() => {
     if (!element) return;
+    let last = -1;
     const tick = () => {
-      setDomNodes(element.querySelectorAll("*").length);
+      const count = element.querySelectorAll("*").length;
+      if (count === last) return;
+      last = count;
+      setDomNodes(count);
     };
     tick();
-    const observer = new MutationObserver(tick);
-    observer.observe(element, { childList: true, subtree: true });
     const id = window.setInterval(tick, 1000);
     return () => {
-      observer.disconnect();
       window.clearInterval(id);
     };
   }, [element, setDomNodes]);
