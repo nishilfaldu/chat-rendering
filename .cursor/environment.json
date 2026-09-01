@@ -3,30 +3,12 @@
   "install": "pnpm install --frozen-lockfile && pnpm seed",
   "terminals": [
     {
-      "name": "naive (3001)",
-      "command": "pnpm dev:naive",
-      "description": "Next.js dev server for the naive chat surface on http://localhost:3001"
-    },
-    {
-      "name": "baseline (3002)",
-      "command": "pnpm dev:baseline",
-      "description": "Next.js dev server for the baseline chat surface on http://localhost:3002"
-    },
-    {
-      "name": "orbit-style (3003)",
-      "command": "pnpm dev:orbit",
-      "description": "Next.js dev server for the orbit-style chat surface on http://localhost:3003"
-    },
-    {
-      "name": "server-index (3004)",
-      "command": "pnpm dev:server",
-      "description": "Next.js dev server for the server-index chat surface on http://localhost:3004"
+      "name": "chat (3000)",
+      "command": "pnpm dev",
+      "description": "Next.js dev server for the chat bench on http://localhost:3000"
     }
   ],
   "ports": [
-    { "name": "naive", "port": 3001 },
-    { "name": "baseline", "port": 3002 },
-    { "name": "orbit-style", "port": 3003 },
-    { "name": "server-index", "port": 3004 }
+    { "name": "chat", "port": 3000 }
   ]
 }

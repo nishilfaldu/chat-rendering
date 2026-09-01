@@ -1,6 +1,7 @@
 "use client"
 
 import type { FormEvent, ReactNode } from "react"
+import Link from "next/link"
 
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -8,10 +9,10 @@ import { Input } from "@workspace/ui/components/input"
 import { Separator } from "@workspace/ui/components/separator"
 
 export const APP_LINKS = [
-  { id: "naive", href: "http://localhost:3001", label: "naive" },
-  { id: "baseline", href: "http://localhost:3002", label: "baseline" },
-  { id: "orbit-style", href: "http://localhost:3003", label: "orbit-style" },
-  { id: "server-index", href: "http://localhost:3004", label: "server-index" },
+  { id: "naive", href: "/naive", label: "naive" },
+  { id: "baseline", href: "/baseline", label: "baseline" },
+  { id: "orbit-style", href: "/orbit-style", label: "orbit-style" },
+  { id: "server-index", href: "/server-index", label: "server-index" },
 ] as const
 
 export type CacheLabel = "cold" | "warm" | "n/a"
@@ -63,7 +64,7 @@ export function ChatFrame({
           </div>
           <nav className="flex flex-wrap gap-1">
             {APP_LINKS.map((app) => (
-              <a
+              <Link
                 key={app.id}
                 href={app.href}
                 className={
@@ -73,7 +74,7 @@ export function ChatFrame({
                 }
               >
                 {app.label}
-              </a>
+              </Link>
             ))}
           </nav>
         </div>

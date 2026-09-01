@@ -4,16 +4,12 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "pnpm --filter chat dev",
     "lint": "turbo lint",
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "seed": "pnpm --filter @chat-surface-bench/seed seed",
-    "verify": "pnpm --filter @chat-surface-bench/seed verify",
-    "dev:naive": "pnpm --filter naive dev",
-    "dev:baseline": "pnpm --filter baseline dev",
-    "dev:orbit": "pnpm --filter orbit-style dev",
-    "dev:server": "pnpm --filter server-index dev"
+    "verify": "pnpm --filter @chat-surface-bench/seed verify"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
