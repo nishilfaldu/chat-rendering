@@ -1,0 +1,29 @@
+{
+  "name": "@chat-surface-bench/bench",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.4",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workspace/ui": "workspace:*",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@workspace/typescript-config": "workspace:*",
+    "typescript": "^5.9.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
