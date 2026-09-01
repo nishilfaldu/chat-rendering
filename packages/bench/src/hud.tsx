@@ -28,7 +28,7 @@ export function Hud(): ReactNode {
   }
 
   return (
-    <aside className="pointer-events-auto absolute right-3 bottom-3 z-20 w-64 rounded-xl border border-border bg-card/95 p-3 font-mono text-[11px] shadow-lg backdrop-blur">
+    <aside className="pointer-events-auto absolute top-24 right-3 z-50 w-64 rounded-xl border border-border bg-card/95 p-3 font-mono text-[11px] shadow-lg backdrop-blur">
       <div className="mb-2 flex items-center justify-between">
         <span className="uppercase tracking-wide text-muted-foreground">hud</span>
         <Badge variant={snapshot.cache === "cold" ? "destructive" : snapshot.cache === "warm" ? "default" : "outline"}>
