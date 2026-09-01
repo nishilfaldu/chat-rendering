@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
-import { useBench } from "./use-bench.ts";
+import { useBench } from "./use-bench.tsx";
 
 function fmt(value: number | null, digits = 1): string {
   if (value === null) return "—";

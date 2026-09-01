@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { BenchSnapshot, CacheLabel } from "./types.ts";
 
+
 type BenchApi = {
   snapshot: BenchSnapshot;
   setCache: (cache: CacheLabel) => void;
