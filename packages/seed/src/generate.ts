@@ -37,7 +37,19 @@ export function generateMessages(options?: {
     const asUser = rng() < 0.42;
     let message: Omit<SeedMessage, "heightClass">;
 
-    if (asUser && roll < 0.72) {
+    if (i === count - 1) {
+      const sample = pick(rng, CODE_SAMPLES)
+      message = {
+        id: messageId(i),
+        sessionId,
+        role: "assistant",
+        timestamp: startedAt + i * 1373 + intBetween(rng, 0, 400),
+        kind: "code",
+        text: wrapCode(sample, 32, rng),
+        codeLang: sample.lang,
+        sortIndex: i,
+      }
+    } else if (asUser && roll < 0.72) {
       message = {
         id: messageId(i),
         sessionId,

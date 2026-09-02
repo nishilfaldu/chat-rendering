@@ -1,7 +1,9 @@
 import { ServerIndexApp } from "@/components/modes/server-index-app"
-import { buildServerIndex } from "@/lib/build-index"
+import { loadServerIndexPayload } from "@/lib/build-index"
+
+export const dynamic = "force-dynamic"
 
 export default function Page() {
-  const index = buildServerIndex()
-  return <ServerIndexApp index={index} />
+  const payload = loadServerIndexPayload()
+  return <ServerIndexApp payload={payload} />
 }

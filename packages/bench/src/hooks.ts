@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { useBench } from "./use-bench.tsx";
 
 export function useScrollFps(element: HTMLElement | null): void {
@@ -70,25 +70,22 @@ export function useBenchSession(input: {
   scroll: HTMLElement | null;
   messageCount: number;
 }): void {
-  const { setMessageCount, markFirstPaint } = useBench();
+  const { setMessageCount } = useBench();
   useScrollFps(input.scroll);
   useDomNodeCount(input.root);
 
   useEffect(() => {
     setMessageCount(input.messageCount);
   }, [input.messageCount, setMessageCount]);
-
-  useLayoutEffect(() => {
-    if (!input.root) return;
-    markFirstPaint();
-  }, [input.root, markFirstPaint]);
 }
 
 export async function timeJump(run: () => void | Promise<void>): Promise<number> {
   const start = performance.now();
   await run();
   await new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
   });
   return performance.now() - start;
 }

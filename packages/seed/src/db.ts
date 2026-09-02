@@ -7,6 +7,7 @@ import {
   MESSAGE_COUNT,
   RENDERER_VERSION,
   SESSION_ID,
+  WIDTH_BUCKETS,
   type HeightMeasurement,
   type MessageIndexRow,
   type SeedMessage,
@@ -110,6 +111,19 @@ export function messageCount(): number {
   return row.n;
 }
 
+export function heightMeasurementCount(): number {
+  const row = getDb().prepare("SELECT COUNT(*) AS n FROM height_measurements").get() as { n: number };
+  return row.n;
+}
+
+export function expectedHeightCount(): number {
+  return MESSAGE_COUNT * WIDTH_BUCKETS.length;
+}
+
+export function measurementsAreWarm(): boolean {
+  return heightMeasurementCount() === expectedHeightCount();
+}
+
 export function listMessages(sessionId = SESSION_ID): SeedMessage[] {
   const rows = getDb()
     .prepare(
@@ -177,6 +191,21 @@ export function upsertHeight(measurement: HeightMeasurement): void {
        ON CONFLICT(message_id, width_bucket) DO UPDATE SET px = excluded.px`,
     )
     .run(measurement);
+}
+
+export function replaceHeights(rows: HeightMeasurement[]): void {
+  const db = getDb();
+  const insert = db.prepare(
+    `INSERT INTO height_measurements (message_id, width_bucket, px)
+     VALUES (@messageId, @widthBucket, @px)
+     ON CONFLICT(message_id, width_bucket) DO UPDATE SET px = excluded.px`,
+  );
+  const writeAll = db.transaction((batch: HeightMeasurement[]) => {
+    for (const row of batch) {
+      insert.run(row);
+    }
+  });
+  writeAll(rows);
 }
 
 export function clearHeights(): void {

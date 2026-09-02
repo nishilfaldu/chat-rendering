@@ -102,13 +102,13 @@ export function ChatFrame({
           <span className="text-border mx-2">|</span>
           does not: {doesNotList.join(" · ")}
         </p>
+        {hud}
       </header>
       <Separator />
       <div className="flex min-h-0 flex-1">
         <div className="relative min-h-0 min-w-0 flex-1">{children}</div>
         {rail}
       </div>
-      {hud}
     </div>
   )
 }

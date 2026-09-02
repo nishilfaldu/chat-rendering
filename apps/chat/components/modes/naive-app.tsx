@@ -7,17 +7,26 @@ import { ChatColumn } from "@workspace/ui/components/chat-column"
 import { ChatFrame } from "@workspace/ui/components/chat-frame"
 import { Composer } from "@workspace/ui/components/composer"
 import { MessageList } from "@workspace/ui/components/message-list"
+import { useStickToBottom } from "@workspace/ui/hooks/use-stick-to-bottom"
 
-function NaiveChat({ messages }: { messages: SeedMessage[] }) {
+function NaiveChat() {
+  const messages = useMemo(() => generateMessages(), [])
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null)
   const [streaming, setStreaming] = useState<{ id: string; text: string } | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const { recordJump } = useBench()
+  const { recordJump, markFirstPaint } = useBench()
+  const { pinAndStick, stickIfPinned, release } = useStickToBottom(scrollEl)
 
   useLayoutEffect(() => {
     setScrollEl(scrollRef.current)
   }, [])
+
+  useLayoutEffect(() => {
+    if (!scrollEl || messages.length === 0) return
+    pinAndStick()
+    markFirstPaint()
+  }, [scrollEl, messages.length, pinAndStick, markFirstPaint])
 
   useBenchSession({
     root: scrollEl,
@@ -28,6 +37,7 @@ function NaiveChat({ messages }: { messages: SeedMessage[] }) {
   async function onJumpTo(n: number) {
     const index = Math.min(Math.max(n, 0), messages.length - 1)
     const target = messages[index]
+    release()
     const ms = await timeJump(() => {
       if (!target || !scrollEl) return
       const node = scrollEl.querySelector(`[data-message-id="${CSS.escape(target.id)}"]`)
@@ -42,16 +52,19 @@ function NaiveChat({ messages }: { messages: SeedMessage[] }) {
     abortRef.current?.abort()
     const ac = new AbortController()
     abortRef.current = ac
+    pinAndStick()
     setStreaming({ id: last.id, text: "" })
     await replayStream({
       text: last.text,
       signal: ac.signal,
       onToken: (text) => {
         setStreaming({ id: last.id, text })
+        requestAnimationFrame(() => stickIfPinned())
       },
     })
     if (!ac.signal.aborted) {
       setStreaming(null)
+      stickIfPinned()
     }
   }
 
@@ -59,8 +72,11 @@ function NaiveChat({ messages }: { messages: SeedMessage[] }) {
     <ChatFrame
       appId="naive"
       title="naive"
-      implementsList={["all 10,000 messages in the DOM", "browser-default scroll anchoring"]}
-      doesNotList={["virtualization", "custom overflow-anchor", "measured height cache"]}
+      implementsList={[
+        "all 10,000 messages in the DOM",
+        "stick-to-bottom on load and while streaming",
+      ]}
+      doesNotList={["virtualization", "measured height cache", "server index"]}
       cacheLabel="n/a"
       onJumpTo={onJumpTo}
       onStreamLast={onStreamLast}
@@ -74,10 +90,9 @@ function NaiveChat({ messages }: { messages: SeedMessage[] }) {
 }
 
 export function NaiveApp() {
-  const messages = useMemo(() => generateMessages(), [])
   return (
     <BenchProvider appId="naive" cache="n/a">
-      <NaiveChat messages={messages} />
+      <NaiveChat />
     </BenchProvider>
   )
 }

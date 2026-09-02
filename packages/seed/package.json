@@ -23,7 +23,8 @@
     "@types/node": "^20.19.41",
     "@workspace/typescript-config": "workspace:*",
     "tsx": "^4.23.13",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "puppeteer-core": "^24.15.0"
   },
   "exports": {
     ".": "./src/index.ts",
