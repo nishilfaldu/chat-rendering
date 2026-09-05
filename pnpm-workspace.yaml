@@ -1,10 +1,6 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-
+# Install-script allowlist for this single package. Not a multi-app workspace.
 allowBuilds:
   better-sqlite3: true
   esbuild: true
-  msw: false
   sharp: true
   unrs-resolver: true
