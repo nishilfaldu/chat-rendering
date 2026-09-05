@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { LAYOUT_VERSION } from "@/lib/seed"
-import { APP_LINKS } from "@/lib/chat-implementations"
+import { implementationLabel } from "@/lib/chat-implementations"
 import { readResults } from "@/lib/benchmark-results"
 
 export const dynamic = "force-dynamic"
@@ -75,7 +75,7 @@ export default async function ResultsPage() {
                   {artifact.summary.map((row) => (
                     <tr key={`${row.mode}-${row.width}`}>
                       <td>
-                        {APP_LINKS.find((item) => item.id === row.mode)?.label}
+                        {implementationLabel(row.mode)}
                       </td>
                       <td>{row.width}</td>
                       <td>{format(row.navigationVisibleMs.median)}</td>

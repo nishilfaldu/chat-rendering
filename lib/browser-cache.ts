@@ -5,13 +5,13 @@ import {
   type WidthBucket,
 } from "@/lib/seed"
 
-const DB_NAME = "railgun-orbit-cache"
+const DB_NAME = "railgun-saved-in-browser"
 const DB_VERSION = 2
 const HEIGHT_STORE = "heights"
 const HTML_STORE = "html"
 const HTML_MEMORY_LIMIT = 2_000
 
-export type OrbitHeightRow = {
+export type BrowserCacheHeightRow = {
   key: string
   sessionId: string
   messageId: string
@@ -24,7 +24,7 @@ export type OrbitHeightRow = {
   settledAt: number
 }
 
-type OrbitHtmlRow = {
+type BrowserCacheHtmlRow = {
   key: string
   widthBucket: WidthBucket
   contentHash: number
@@ -34,7 +34,7 @@ type OrbitHtmlRow = {
   settledAt: number
 }
 
-export function orbitCacheKey(input: {
+export function browserCacheKey(input: {
   sessionId: string
   messageId: string
   widthBucket: WidthBucket
@@ -89,19 +89,19 @@ function openDatabase(): Promise<IDBDatabase> {
   return databasePromise
 }
 
-export async function loadOrbitRows(
+export async function loadBrowserCacheRows(
   sessionId: string,
   widthBucket: WidthBucket
-): Promise<Map<string, OrbitHeightRow>> {
+): Promise<Map<string, BrowserCacheHeightRow>> {
   const database = await openDatabase()
-  const rows = await new Promise<OrbitHeightRow[]>((resolve, reject) => {
+  const rows = await new Promise<BrowserCacheHeightRow[]>((resolve, reject) => {
     const transaction = database.transaction(HEIGHT_STORE, "readonly")
     const request = transaction
       .objectStore(HEIGHT_STORE)
       .index("sessionWidth")
       .getAll([sessionId, widthBucket])
     request.onerror = () => reject(request.error)
-    request.onsuccess = () => resolve(request.result as OrbitHeightRow[])
+    request.onsuccess = () => resolve(request.result as BrowserCacheHeightRow[])
   })
   return new Map(
     rows
@@ -115,18 +115,18 @@ export async function loadOrbitRows(
   )
 }
 
-export async function loadOrbitHtml(
+export async function loadBrowserCacheHtml(
   widthBucket: WidthBucket
 ): Promise<Map<number, string>> {
   const database = await openDatabase()
-  const rows = await new Promise<OrbitHtmlRow[]>((resolve, reject) => {
+  const rows = await new Promise<BrowserCacheHtmlRow[]>((resolve, reject) => {
     const transaction = database.transaction(HTML_STORE, "readonly")
     const request = transaction
       .objectStore(HTML_STORE)
       .index("width")
       .getAll(widthBucket)
     request.onerror = () => reject(request.error)
-    request.onsuccess = () => resolve(request.result as OrbitHtmlRow[])
+    request.onsuccess = () => resolve(request.result as BrowserCacheHtmlRow[])
   })
   rows.sort((a, b) => b.settledAt - a.settledAt)
   return new Map(
@@ -141,8 +141,8 @@ export async function loadOrbitHtml(
   )
 }
 
-export async function putOrbitRow(
-  row: OrbitHeightRow,
+export async function putBrowserCacheRow(
+  row: BrowserCacheHeightRow,
   html: string
 ): Promise<void> {
   const database = await openDatabase()
@@ -162,11 +162,11 @@ export async function putOrbitRow(
       layoutVersion: row.layoutVersion,
       html,
       settledAt: row.settledAt,
-    } satisfies OrbitHtmlRow)
+    } satisfies BrowserCacheHtmlRow)
   })
 }
 
-export async function clearOrbitRows(): Promise<void> {
+export async function clearBrowserCache(): Promise<void> {
   const database = await openDatabase()
   await new Promise<void>((resolve, reject) => {
     const transaction = database.transaction(

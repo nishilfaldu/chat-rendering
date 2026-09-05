@@ -10,7 +10,7 @@ const browser = await puppeteer.launch({
 try {
   for (const mode of process.env.CHECK_MODE
     ? [process.env.CHECK_MODE]
-    : ["baseline", "orbit", "server-heights", "server-index"]) {
+    : ["measured", "saved-in-browser", "saved-measurements", "saved-html"]) {
     const page = await browser.newPage()
     await page.evaluateOnNewDocument("globalThis.__name = (target) => target")
     await page.setViewport({ width: 768, height: 900 })

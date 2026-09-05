@@ -22,7 +22,7 @@ import {
 
 const FLAT_ESTIMATE = 80
 
-function BaselineSurface({ messages }: { messages: SeedMessage[] }) {
+function MeasuredSurface({ messages }: { messages: SeedMessage[] }) {
   const { scrollElement, widthBucket } = useChatRuntime()
   const { anchor, capture } = useReadingAnchor(scrollElement)
   const pendingResize = useRef<ReadingAnchor | null>(null)
@@ -93,7 +93,7 @@ function BaselineSurface({ messages }: { messages: SeedMessage[] }) {
   )
 }
 
-export function BaselineApp({
+export function MeasuredApp({
   messages,
   serverQueryMs = null,
 }: {
@@ -104,7 +104,7 @@ export function BaselineApp({
   return (
     <BenchProvider
       key={epoch}
-      appId="baseline"
+      appId="measured"
       cache="cold"
       serverQueryMs={serverQueryMs}
     >
@@ -112,7 +112,7 @@ export function BaselineApp({
         lastMessage={messages.at(-1) ?? null}
         onCacheReset={() => setEpoch((value) => value + 1)}
       >
-        <BaselineSurface messages={messages} />
+        <MeasuredSurface messages={messages} />
       </ChatRuntime>
     </BenchProvider>
   )

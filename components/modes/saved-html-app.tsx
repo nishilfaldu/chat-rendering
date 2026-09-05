@@ -4,17 +4,17 @@ import { useCallback, useMemo } from "react"
 import { BenchProvider, useBench } from "@/lib/bench"
 import { MessageBubble } from "@/components/message-bubble"
 
-import type { HtmlIndexedMessage, ServerIndexPayload } from "@/lib/build-index"
+import type { HtmlIndexedMessage, SavedHtmlPayload } from "@/lib/build-index"
 
 import { ChatRuntime } from "./chat-runtime"
 import { ServerGeometrySurface } from "./server-geometry"
 import { usePagedHtml } from "./use-paged-html"
 
-function RailgunMode({
+function SavedHtmlMode({
   payload,
   persistMeasurements,
 }: {
-  payload: ServerIndexPayload
+  payload: SavedHtmlPayload
   persistMeasurements: boolean
 }) {
   const { setHtmlCacheStats } = useBench()
@@ -79,11 +79,11 @@ function RailgunMode({
   )
 }
 
-export function ServerIndexApp({
+export function SavedHtmlApp({
   payload,
   persistMeasurements = true,
 }: {
-  payload: ServerIndexPayload
+  payload: SavedHtmlPayload
   persistMeasurements?: boolean
 }) {
   const cache = payload.warm
@@ -93,11 +93,11 @@ export function ServerIndexApp({
       : "cold"
   return (
     <BenchProvider
-      appId="server-index"
+      appId="saved-html"
       cache={cache}
       serverQueryMs={payload.serverQueryMs}
     >
-      <RailgunMode
+      <SavedHtmlMode
         payload={payload}
         persistMeasurements={persistMeasurements}
       />

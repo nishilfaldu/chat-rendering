@@ -1,12 +1,12 @@
-import { BaselineApp } from "@/components/modes/baseline-app"
-import { HeightClassApp } from "@/components/modes/height-class-app"
-import { NaiveApp } from "@/components/modes/naive-app"
-import { OrbitCacheApp } from "@/components/modes/orbit-cache-app"
-import { ServerHeightsApp } from "@/components/modes/server-heights-app"
-import { ServerIndexApp } from "@/components/modes/server-index-app"
+import { MeasuredApp } from "@/components/modes/measured-app"
+import { EstimatedApp } from "@/components/modes/estimated-app"
+import { EveryMessageApp } from "@/components/modes/every-message-app"
+import { SavedInBrowserApp } from "@/components/modes/saved-in-browser-app"
+import { SavedMeasurementsApp } from "@/components/modes/saved-measurements-app"
+import { SavedHtmlApp } from "@/components/modes/saved-html-app"
 import {
-  loadServerHeightsPayload,
-  loadServerIndexPayload,
+  loadSavedMeasurementsPayload,
+  loadSavedHtmlPayload,
 } from "@/lib/build-index"
 import { loadCanonicalMessagesTimed } from "@/lib/corpus"
 import { loadModePage, type ModePageParams } from "@/lib/mode-page"
@@ -17,55 +17,55 @@ export function renderConversation(
   searchParams: ModePageParams
 ) {
   switch (mode) {
-    case "naive":
+    case "every-message":
       return loadModePage({
         searchParams,
         load: loadCanonicalMessagesTimed,
         render: ({ messages, serverQueryMs }) => (
-          <NaiveApp messages={messages} serverQueryMs={serverQueryMs} />
+          <EveryMessageApp messages={messages} serverQueryMs={serverQueryMs} />
         ),
       })
-    case "baseline":
+    case "measured":
       return loadModePage({
         searchParams,
         load: loadCanonicalMessagesTimed,
         render: ({ messages, serverQueryMs }) => (
-          <BaselineApp messages={messages} serverQueryMs={serverQueryMs} />
+          <MeasuredApp messages={messages} serverQueryMs={serverQueryMs} />
         ),
       })
-    case "height-class":
+    case "estimated":
       return loadModePage({
         searchParams,
         load: loadCanonicalMessagesTimed,
         render: ({ messages, serverQueryMs }) => (
-          <HeightClassApp messages={messages} serverQueryMs={serverQueryMs} />
+          <EstimatedApp messages={messages} serverQueryMs={serverQueryMs} />
         ),
       })
-    case "orbit":
+    case "saved-in-browser":
       return loadModePage({
         searchParams,
         load: loadCanonicalMessagesTimed,
         render: ({ messages, serverQueryMs }) => (
-          <OrbitCacheApp messages={messages} serverQueryMs={serverQueryMs} />
+          <SavedInBrowserApp messages={messages} serverQueryMs={serverQueryMs} />
         ),
       })
-    case "server-heights":
+    case "saved-measurements":
       return loadModePage({
         searchParams,
-        load: loadServerHeightsPayload,
+        load: loadSavedMeasurementsPayload,
         render: (payload, { benchmark, simulated }) => (
-          <ServerHeightsApp
+          <SavedMeasurementsApp
             payload={payload}
             persistMeasurements={!benchmark && !simulated}
           />
         ),
       })
-    case "server-index":
+    case "saved-html":
       return loadModePage({
         searchParams,
-        load: loadServerIndexPayload,
+        load: loadSavedHtmlPayload,
         render: (payload, { benchmark, simulated }) => (
-          <ServerIndexApp
+          <SavedHtmlApp
             payload={payload}
             persistMeasurements={!benchmark && !simulated}
           />

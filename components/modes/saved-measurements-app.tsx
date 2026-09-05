@@ -6,17 +6,17 @@ import { MessageBubble } from "@/components/message-bubble"
 
 import type {
   MarkdownIndexedMessage,
-  ServerHeightsPayload,
+  SavedMeasurementsPayload,
 } from "@/lib/build-index"
 
 import { ChatRuntime } from "./chat-runtime"
 import { ServerGeometrySurface } from "./server-geometry"
 
-function ServerHeightsMode({
+function SavedMeasurementsMode({
   payload,
   persistMeasurements,
 }: {
-  payload: ServerHeightsPayload
+  payload: SavedMeasurementsPayload
   persistMeasurements: boolean
 }) {
   const renderMessage = useCallback(
@@ -47,11 +47,11 @@ function ServerHeightsMode({
   )
 }
 
-export function ServerHeightsApp({
+export function SavedMeasurementsApp({
   payload,
   persistMeasurements = true,
 }: {
-  payload: ServerHeightsPayload
+  payload: SavedMeasurementsPayload
   persistMeasurements?: boolean
 }) {
   const cache = payload.warm
@@ -61,11 +61,11 @@ export function ServerHeightsApp({
       : "cold"
   return (
     <BenchProvider
-      appId="server-heights"
+      appId="saved-measurements"
       cache={cache}
       serverQueryMs={payload.serverQueryMs}
     >
-      <ServerHeightsMode
+      <SavedMeasurementsMode
         payload={payload}
         persistMeasurements={persistMeasurements}
       />

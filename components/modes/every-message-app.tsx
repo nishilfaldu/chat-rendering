@@ -12,7 +12,7 @@ import {
   type ChatRuntimeController,
 } from "./chat-runtime"
 
-function NaiveSurface({ messages }: { messages: SeedMessage[] }) {
+function EveryMessageSurface({ messages }: { messages: SeedMessage[] }) {
   const { scrollElement, streaming } = useChatRuntime()
   const controller = useMemo<ChatRuntimeController>(
     () => ({
@@ -31,7 +31,7 @@ function NaiveSurface({ messages }: { messages: SeedMessage[] }) {
   return <MessageList messages={messages} streaming={streaming} />
 }
 
-export function NaiveApp({
+export function EveryMessageApp({
   messages,
   serverQueryMs = null,
 }: {
@@ -39,9 +39,9 @@ export function NaiveApp({
   serverQueryMs?: number | null
 }) {
   return (
-    <BenchProvider appId="naive" cache="n/a" serverQueryMs={serverQueryMs}>
+    <BenchProvider appId="every-message" cache="n/a" serverQueryMs={serverQueryMs}>
       <ChatRuntime lastMessage={messages.at(-1) ?? null}>
-        <NaiveSurface messages={messages} />
+        <EveryMessageSurface messages={messages} />
       </ChatRuntime>
     </BenchProvider>
   )

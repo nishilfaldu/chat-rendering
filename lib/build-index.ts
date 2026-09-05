@@ -44,13 +44,13 @@ type ServerPayloadBase = {
   serverQueryMs: number
 }
 
-export type ServerHeightsPayload = ServerPayloadBase & {
-  mode: "server-heights"
+export type SavedMeasurementsPayload = ServerPayloadBase & {
+  mode: "saved-measurements"
   messages: MarkdownIndexedMessage[]
 }
 
-export type ServerIndexPayload = ServerPayloadBase & {
-  mode: "server-index"
+export type SavedHtmlPayload = ServerPayloadBase & {
+  mode: "saved-html"
   messages: HtmlIndexedMessage[]
   streamSource: { id: string; text: string } | null
 }
@@ -118,14 +118,14 @@ function metadata(message: SeedMessage): IndexedMessageBase {
   return { ...rest, contentHash: hashContent(text) }
 }
 
-export function loadServerHeightsPayload(
+export function loadSavedMeasurementsPayload(
   state: MeasurementState = "saved"
-): ServerHeightsPayload {
+): SavedMeasurementsPayload {
   const base = loadBase(state)
   const { source, ...shared } = base
   return {
     ...shared,
-    mode: "server-heights",
+    mode: "saved-measurements",
     messages: source.map((message) => ({
       ...metadata(message),
       content: { kind: "markdown", markdown: message.text },
@@ -133,9 +133,9 @@ export function loadServerHeightsPayload(
   }
 }
 
-export function loadServerIndexPayload(
+export function loadSavedHtmlPayload(
   state: MeasurementState = "saved"
-): ServerIndexPayload {
+): SavedHtmlPayload {
   const started = performance.now()
   const base = loadBase(state)
   const { source, ...shared } = base
@@ -146,7 +146,7 @@ export function loadServerIndexPayload(
   const last = source.at(-1)
   return {
     ...shared,
-    mode: "server-index",
+    mode: "saved-html",
     messages: source.map((message) => ({
       ...metadata(message),
       content: { kind: "html", html: initialHtml.get(message.id) ?? null },

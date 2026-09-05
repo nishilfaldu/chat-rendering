@@ -22,16 +22,16 @@ Every implementation must support the same journeys over the same canonical SQLi
 
 ## Comparison modes
 
-| Mode                   | Data source | Geometry                                               | Rendered-content cache         |
-| ---------------------- | ----------- | ------------------------------------------------------ | ------------------------------ |
-| Naive                  | SQLite      | Natural DOM for all rows                               | None                           |
-| TanStack baseline      | SQLite      | Flat estimate, then live measurement                   | In-memory only                 |
-| Height-class estimates | SQLite      | Fixed content-class estimate                           | None                           |
-| Orbit client cache     | SQLite      | Settled measurements persisted in IndexedDB            | Settled HTML in IndexedDB      |
-| Railgun server heights | SQLite      | Settled server measurements with a live DOM truth path | None                           |
-| Railgun full           | SQLite      | Settled server measurements with a live DOM truth path | Server-prerendered, paged HTML |
+| Implementation                | Data source | Geometry                                               | Rendered-content cache         |
+| ----------------------------- | ----------- | ------------------------------------------------------ | ------------------------------ |
+| Every message                 | SQLite      | Natural DOM for all rows                               | None                           |
+| Measured in the browser       | SQLite      | Flat estimate, then live measurement                   | In-memory only                 |
+| Estimated by content type     | SQLite      | Fixed content-class estimate                           | None                           |
+| Saved in this browser         | SQLite      | Settled measurements persisted in IndexedDB            | Settled HTML in IndexedDB      |
+| Saved measurements            | SQLite      | Settled server measurements with a live DOM truth path | None                           |
+| Saved measurements + HTML     | SQLite      | Settled server measurements with a live DOM truth path | Server-prerendered, paged HTML |
 
-The height-only and full Railgun modes are separate so the effect of correct initial geometry is not confused with the effect of bypassing client Markdown and syntax-highlight rendering.
+The height-only and HTML-backed saved-measurement implementations are separate so the effect of correct initial geometry is not confused with the effect of bypassing client Markdown and syntax-highlight rendering.
 
 ## Cache states
 

@@ -12,7 +12,7 @@ try {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(String(error)))
   await page.goto(
-    `${process.env.CHECK_URL ?? "http://localhost:3000"}/embed/baseline`
+    `${process.env.CHECK_URL ?? "http://localhost:3000"}/embed/measured`
   )
   await page.waitForFunction(
     () => window.__RAILGUN_BENCH__?.snapshot.messageCount

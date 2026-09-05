@@ -1,10 +1,10 @@
 export const BENCHMARK_MODES = [
-  "naive",
-  "baseline",
-  "height-class",
-  "orbit",
-  "server-heights",
-  "server-index",
+  "every-message",
+  "measured",
+  "estimated",
+  "saved-in-browser",
+  "saved-measurements",
+  "saved-html",
 ] as const
 
 export type BenchmarkMode = (typeof BENCHMARK_MODES)[number]

@@ -21,7 +21,7 @@ function classSize(
   return estimatePx(message?.heightClass ?? "sm", bucket)
 }
 
-function HeightClassSurface({ messages }: { messages: SeedMessage[] }) {
+function EstimatedSurface({ messages }: { messages: SeedMessage[] }) {
   const { scrollElement, widthBucket: bucket } = useChatRuntime()
   const virtual = useVirtualChat({
     messages,
@@ -44,7 +44,7 @@ function HeightClassSurface({ messages }: { messages: SeedMessage[] }) {
   )
 }
 
-export function HeightClassApp({
+export function EstimatedApp({
   messages,
   serverQueryMs = null,
 }: {
@@ -53,12 +53,12 @@ export function HeightClassApp({
 }) {
   return (
     <BenchProvider
-      appId="height-class"
+      appId="estimated"
       cache="n/a"
       serverQueryMs={serverQueryMs}
     >
       <ChatRuntime lastMessage={messages.at(-1) ?? null}>
-        <HeightClassSurface messages={messages} />
+        <EstimatedSurface messages={messages} />
       </ChatRuntime>
     </BenchProvider>
   )

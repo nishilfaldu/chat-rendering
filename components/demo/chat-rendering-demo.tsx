@@ -293,8 +293,8 @@ export function ChatRenderingDemo() {
     useRef<HTMLIFrameElement>(null),
   ]
   const [modes, setModes] = useState<[ChatAppId, ChatAppId]>([
-    "server-heights",
-    "baseline",
+    "saved-measurements",
+    "measured",
   ])
   const [compare, setCompare] = useState(false)
   const [scenario, setScenario] = useState<Scenario>("scroll")

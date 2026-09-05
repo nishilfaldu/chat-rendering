@@ -14,13 +14,13 @@ import { BenchProvider, useBench } from "@/lib/bench"
 import { MessageList } from "@/components/message-list"
 
 import {
-  clearOrbitRows,
-  loadOrbitHtml,
-  loadOrbitRows,
-  orbitCacheKey,
-  putOrbitRow,
-  type OrbitHeightRow,
-} from "@/lib/orbit-cache"
+  clearBrowserCache,
+  loadBrowserCacheHtml,
+  loadBrowserCacheRows,
+  browserCacheKey,
+  putBrowserCacheRow,
+  type BrowserCacheHeightRow,
+} from "@/lib/browser-cache"
 
 import {
   ChatRuntime,
@@ -39,14 +39,14 @@ import { VirtualMessageSurface } from "./virtual-message-surface"
 const INITIAL_PREVIEW_ROWS = 24
 const HTML_MEMORY_LIMIT = 2_000
 
-type PendingOrbitMeasurement = {
+type PendingBrowserMeasurement = {
   bucket: WidthBucket
   element: Element
   height: number
   message: SeedMessage
 }
 
-function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
+function SavedInBrowserSurface({ messages }: { messages: SeedMessage[] }) {
   const {
     adjustScrollBy,
     scrollElement,
@@ -54,7 +54,7 @@ function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
     widthBucket: bucket,
   } = useChatRuntime()
   const [loadedBucket, setLoadedBucket] = useState<WidthBucket | null>(null)
-  const [cache, setLocalCache] = useState<Map<string, OrbitHeightRow>>(
+  const [cache, setLocalCache] = useState<Map<string, BrowserCacheHeightRow>>(
     () => new Map()
   )
   const [htmlCache, setHtmlCache] = useState<Map<number, string>>(
@@ -67,7 +67,7 @@ function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
   const cacheReady = loadedBucket === bucket
   const hasLoadedCache = loadedBucket !== null
   const activeCache = useMemo(
-    () => (cacheReady ? cache : new Map<string, OrbitHeightRow>()),
+    () => (cacheReady ? cache : new Map<string, BrowserCacheHeightRow>()),
     [cache, cacheReady]
   )
   const { capture, anchor } = useReadingAnchor(scrollElement)
@@ -79,11 +79,11 @@ function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
   useEffect(() => {
     let cancelled = false
     void Promise.all([
-      loadOrbitRows(sessionId, bucket),
-      loadOrbitHtml(bucket),
+      loadBrowserCacheRows(sessionId, bucket),
+      loadBrowserCacheHtml(bucket),
     ]).then(([rows, html]) => {
       if (cancelled) return
-      const valid = new Map<string, OrbitHeightRow>()
+      const valid = new Map<string, BrowserCacheHeightRow>()
       for (const message of messages) {
         const row = rows.get(message.id)
         if (row?.contentHash === hashContent(message.text)) {
@@ -106,14 +106,14 @@ function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
     }
   }, [bucket, messages, sessionId, setCache])
 
-  const persistSettled = useSettledMeasurement<PendingOrbitMeasurement>(
+  const persistSettled = useSettledMeasurement<PendingBrowserMeasurement>(
     async ({ bucket: measuredBucket, element, height, message }) => {
       if (!element.isConnected || streaming?.id === message.id) return
       const body = element.querySelector<HTMLElement>("[data-message-body]")
       if (!body || body.innerHTML.length === 0) return
       const contentHash = hashContent(message.text)
-      const row: OrbitHeightRow = {
-        key: orbitCacheKey({
+      const row: BrowserCacheHeightRow = {
+        key: browserCacheKey({
           sessionId: message.sessionId,
           messageId: message.id,
           widthBucket: measuredBucket,
@@ -129,7 +129,7 @@ function OrbitCacheSurface({ messages }: { messages: SeedMessage[] }) {
         height,
         settledAt: Date.now(),
       }
-      await putOrbitRow(row, body.innerHTML)
+      await putBrowserCacheRow(row, body.innerHTML)
       if (measuredBucket !== bucket) return
       setLocalCache((previous) => {
         const next = new Map(previous)
@@ -260,7 +260,7 @@ function correctionKeyFor(bucket: WidthBucket, messageId: string): string {
   return `${bucket}:${messageId}`
 }
 
-export function OrbitCacheApp({
+export function SavedInBrowserApp({
   messages,
   serverQueryMs = null,
 }: {
@@ -269,18 +269,18 @@ export function OrbitCacheApp({
 }) {
   const [epoch, setEpoch] = useState(0)
   const reset = async () => {
-    await clearOrbitRows()
+    await clearBrowserCache()
     setEpoch((value) => value + 1)
   }
   return (
     <BenchProvider
       key={epoch}
-      appId="orbit"
+      appId="saved-in-browser"
       cache="cold"
       serverQueryMs={serverQueryMs}
     >
       <ChatRuntime lastMessage={messages.at(-1) ?? null} onCacheReset={reset}>
-        <OrbitCacheSurface messages={messages} />
+        <SavedInBrowserSurface messages={messages} />
       </ChatRuntime>
     </BenchProvider>
   )

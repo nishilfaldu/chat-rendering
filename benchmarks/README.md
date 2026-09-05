@@ -9,7 +9,7 @@ The default matrix is deliberately expensive:
 - 20 runs per cell
 - 480px, 768px, and 1280px viewports at DPR 1
 - one canonical 10,000-message SQLite conversation
-- naive, TanStack baseline, height-class estimates, Orbit client cache, server heights, and Railgun full
+- Every message, Measured in the browser, Estimated by content type, Saved in this browser, Saved measurements, and Saved measurements + HTML
 
 Run it with:
 
