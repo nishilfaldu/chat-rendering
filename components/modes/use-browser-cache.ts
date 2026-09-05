@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useState } from "react"
 import {
   DATASET_VERSION,
   LAYOUT_VERSION,
@@ -9,7 +9,7 @@ import {
   type SeedMessage,
   type WidthBucket,
 } from "@/lib/seed"
-import { useBench } from "@/lib/bench"
+import { useBench, type CacheLabel } from "@/lib/bench"
 
 import {
   loadBrowserCacheHtml,
@@ -29,6 +29,12 @@ type PendingBrowserMeasurement = {
   element: Element
   height: number
   message: SeedMessage
+}
+
+function cacheLabel(size: number, messageCount: number): CacheLabel {
+  if (size === 0) return "cold"
+  if (size === messageCount) return "warm"
+  return "partial"
 }
 
 export function useBrowserMessageCache(messages: SeedMessage[]) {
@@ -65,19 +71,17 @@ export function useBrowserMessageCache(messages: SeedMessage[]) {
       }
       setLocalCache(valid)
       setHtmlCache(html)
-      setCache(
-        valid.size === 0
-          ? "cold"
-          : valid.size === messages.length
-            ? "warm"
-            : "partial"
-      )
       setLoadedBucket(bucket)
     })
     return () => {
       cancelled = true
     }
-  }, [bucket, messages, sessionId, setCache])
+  }, [bucket, messages, sessionId])
+
+  useLayoutEffect(() => {
+    if (loadedBucket === null) return
+    setCache(cacheLabel(cache.size, messages.length))
+  }, [cache, loadedBucket, messages.length, setCache])
 
   const persistSettled = useSettledMeasurement<PendingBrowserMeasurement>(
     async ({ bucket: measuredBucket, element, height, message }) => {
@@ -107,7 +111,6 @@ export function useBrowserMessageCache(messages: SeedMessage[]) {
       setLocalCache((previous) => {
         const next = new Map(previous)
         next.set(message.id, row)
-        setCache(next.size === messages.length ? "warm" : "partial")
         return next
       })
       setHtmlCache((previous) => {

@@ -131,7 +131,9 @@ export function BenchProvider({
   )
 
   const setCache = useCallback((next: CacheLabel) => {
-    setSnapshot((prev) => ({ ...prev, cache: next }))
+    setSnapshot((prev) =>
+      prev.cache === next ? prev : { ...prev, cache: next }
+    )
   }, [])
 
   const setMessageCount = useCallback((count: number) => {
