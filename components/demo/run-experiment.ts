@@ -66,9 +66,6 @@ export async function runExperiment({
               correctedPx: snapshot.correctedPx,
               elapsed: performance.now() - started,
               frameP95: null,
-              blank: 0,
-              pending: 0,
-              frames: 0,
               drift: null,
               landing: null,
             })

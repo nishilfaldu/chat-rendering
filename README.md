@@ -53,6 +53,6 @@ The default production protocol runs each implementation 20 times at 480px, 768p
 
 For a shorter check: `pnpm bench:smoke`. Limited runs are explicitly labeled exploratory in the results page. They are not evidence for reliable tail-latency claims.
 
-The production suite includes navigation, database work, transfer, parsing, hydration, and rendering. It does not isolate geometry costs. In-page readings include diagnostic overhead; simultaneous comparisons share browser resources. Empty viewport samples and visible loading placeholders are counted separately.
+The production suite includes navigation, database work, transfer, parsing, hydration, and rendering. It does not isolate geometry costs. In-page readings include diagnostic overhead; simultaneous comparisons share browser resources.
 
 The corpus contains text, Markdown, code, and fixed-size image placeholders. It replays text locally and does not call a model API. See [the experimental contract](docs/benchmark-contract.md) and [benchmark methodology](benchmarks/README.md).

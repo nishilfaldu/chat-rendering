@@ -42,18 +42,6 @@ export function experimentReadingFields(
       visible: results.some((result) => result.frameP95 !== null),
     },
     {
-      label: "Empty viewport samples",
-      value: (result) =>
-        result.frames ? `${result.blank} / ${result.frames}` : "—",
-      visible: results.some((result) => result.frames > 0),
-    },
-    {
-      label: "Content loading samples",
-      value: (result) =>
-        result.frames ? `${result.pending} / ${result.frames}` : "—",
-      visible: results.some((result) => result.frames > 0),
-    },
-    {
       label: "Reading position moved",
       value: (result) => formatReading(result.drift, " px"),
       visible: results.some((result) => result.drift !== null),

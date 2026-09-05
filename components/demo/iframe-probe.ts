@@ -11,9 +11,6 @@ export type RunResult = {
   mode: ChatAppId
   elapsed: number
   frameP95: number | null
-  blank: number
-  pending: number
-  frames: number
   drift: number | null
   landing: number | null
   mounted: number | null
@@ -62,27 +59,13 @@ export function firstVisible(scroll: HTMLElement) {
 export function track(frame: HTMLIFrameElement, mode: ChatAppId) {
   const scroll = scrollOf(frame)!
   const times: number[] = []
-  let blank = 0,
-    pending = 0,
-    frames = 0,
-    last: number | null = null,
+  let last: number | null = null,
     raf = 0
   const win = frame.contentWindow!
   const initial = win.__RAILGUN_BENCH__!.snapshot
   const tick = (now: number) => {
     if (last !== null) times.push(now - last)
     last = now
-    frames++
-    const viewport = scroll.getBoundingClientRect()
-    const visible = [
-      ...scroll.querySelectorAll<HTMLElement>("[data-message-id]"),
-    ].filter((row) => {
-      const rect = row.getBoundingClientRect()
-      return rect.bottom > viewport.top && rect.top < viewport.bottom
-    })
-    if (!visible.length) blank++
-    if (visible.some((row) => row.querySelector("[data-content-pending]")))
-      pending++
     raf = win.requestAnimationFrame(tick)
   }
   raf = win.requestAnimationFrame(tick)
@@ -102,9 +85,6 @@ export function track(frame: HTMLIFrameElement, mode: ChatAppId) {
       frameP95: times.length
         ? times[Math.ceil(times.length * 0.95) - 1]!
         : null,
-      blank,
-      pending,
-      frames,
       drift: null,
       landing: null,
     } as RunResult
