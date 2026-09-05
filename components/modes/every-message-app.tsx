@@ -39,7 +39,11 @@ export function EveryMessageApp({
   serverQueryMs?: number | null
 }) {
   return (
-    <BenchProvider appId="every-message" cache="n/a" serverQueryMs={serverQueryMs}>
+    <BenchProvider
+      appId="every-message"
+      cache="n/a"
+      serverQueryMs={serverQueryMs}
+    >
       <ChatRuntime lastMessage={messages.at(-1) ?? null}>
         <EveryMessageSurface messages={messages} />
       </ChatRuntime>

@@ -1,155 +1,34 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
-  estimatePx,
-  hashContent,
-  type SeedMessage,
-  type WidthBucket,
-} from "@/lib/seed"
-import { BenchProvider, useBench } from "@/lib/bench"
+import { useMemo, useState } from "react"
+import { estimatePx, hashContent, type SeedMessage } from "@/lib/seed"
+import { BenchProvider } from "@/lib/bench"
+import { MessageBubble } from "@/components/message-bubble"
 import { MessageList } from "@/components/message-list"
 
-import {
-  clearBrowserCache,
-  loadBrowserCacheHtml,
-  loadBrowserCacheRows,
-  browserCacheKey,
-  putBrowserCacheRow,
-  type BrowserCacheHeightRow,
-} from "@/lib/browser-cache"
+import { clearBrowserCache } from "@/lib/browser-cache"
 
-import {
-  ChatRuntime,
-  useBeforeWidthChange,
-  useChatRuntime,
-} from "./chat-runtime"
-import {
-  useReadingAnchor,
-  useSettledMeasurement,
-  settleReadingAnchor,
-  type ReadingAnchor,
-} from "./geometry-hooks"
+import { ChatRuntime, useChatRuntime } from "./chat-runtime"
+import { settleReadingAnchor } from "./geometry-hooks"
+import { useHeightCorrection, useResizeRestore } from "./measurement-hooks"
+import { useBrowserMessageCache } from "./use-browser-cache"
 import { useVirtualChat } from "./use-virtual-chat"
-import { VirtualMessageSurface } from "./virtual-message-surface"
+import { VirtualRows } from "./virtual-rows"
 
 const INITIAL_PREVIEW_ROWS = 24
-const HTML_MEMORY_LIMIT = 2_000
-
-type PendingBrowserMeasurement = {
-  bucket: WidthBucket
-  element: Element
-  height: number
-  message: SeedMessage
-}
 
 function SavedInBrowserSurface({ messages }: { messages: SeedMessage[] }) {
+  const { adjustScrollBy, scrollElement } = useChatRuntime()
   const {
-    adjustScrollBy,
-    scrollElement,
+    bucket,
+    cacheReady,
+    hasLoadedCache,
+    activeCache,
+    htmlCache,
+    persistSettled,
     streaming,
-    widthBucket: bucket,
-  } = useChatRuntime()
-  const [loadedBucket, setLoadedBucket] = useState<WidthBucket | null>(null)
-  const [cache, setLocalCache] = useState<Map<string, BrowserCacheHeightRow>>(
-    () => new Map()
-  )
-  const [htmlCache, setHtmlCache] = useState<Map<number, string>>(
-    () => new Map()
-  )
-  const lastCorrections = useRef(new Map<string, number>())
-  const pendingResize = useRef<ReadingAnchor | null>(null)
-  const { recordCorrection, setCache } = useBench()
-  const sessionId = messages[0]?.sessionId ?? ""
-  const cacheReady = loadedBucket === bucket
-  const hasLoadedCache = loadedBucket !== null
-  const activeCache = useMemo(
-    () => (cacheReady ? cache : new Map<string, BrowserCacheHeightRow>()),
-    [cache, cacheReady]
-  )
-  const { capture, anchor } = useReadingAnchor(scrollElement)
-  const captureBeforeResize = () => {
-    pendingResize.current = anchor.current ?? capture()
-  }
-  useBeforeWidthChange(captureBeforeResize)
-
-  useEffect(() => {
-    let cancelled = false
-    void Promise.all([
-      loadBrowserCacheRows(sessionId, bucket),
-      loadBrowserCacheHtml(bucket),
-    ]).then(([rows, html]) => {
-      if (cancelled) return
-      const valid = new Map<string, BrowserCacheHeightRow>()
-      for (const message of messages) {
-        const row = rows.get(message.id)
-        if (row?.contentHash === hashContent(message.text)) {
-          valid.set(message.id, row)
-        }
-      }
-      setLocalCache(valid)
-      setHtmlCache(html)
-      setCache(
-        valid.size === 0
-          ? "cold"
-          : valid.size === messages.length
-            ? "warm"
-            : "partial"
-      )
-      setLoadedBucket(bucket)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [bucket, messages, sessionId, setCache])
-
-  const persistSettled = useSettledMeasurement<PendingBrowserMeasurement>(
-    async ({ bucket: measuredBucket, element, height, message }) => {
-      if (!element.isConnected || streaming?.id === message.id) return
-      const body = element.querySelector<HTMLElement>("[data-message-body]")
-      if (!body || body.innerHTML.length === 0) return
-      const contentHash = hashContent(message.text)
-      const row: BrowserCacheHeightRow = {
-        key: browserCacheKey({
-          sessionId: message.sessionId,
-          messageId: message.id,
-          widthBucket: measuredBucket,
-          contentHash,
-        }),
-        sessionId: message.sessionId,
-        messageId: message.id,
-        widthBucket: measuredBucket,
-        contentHash,
-        datasetVersion: DATASET_VERSION,
-        rendererVersion: RENDERER_VERSION,
-        layoutVersion: LAYOUT_VERSION,
-        height,
-        settledAt: Date.now(),
-      }
-      await putBrowserCacheRow(row, body.innerHTML)
-      if (measuredBucket !== bucket) return
-      setLocalCache((previous) => {
-        const next = new Map(previous)
-        next.set(message.id, row)
-        setCache(next.size === messages.length ? "warm" : "partial")
-        return next
-      })
-      setHtmlCache((previous) => {
-        const next = new Map(previous)
-        next.delete(contentHash)
-        next.set(contentHash, body.innerHTML)
-        while (next.size > HTML_MEMORY_LIMIT) {
-          const oldest = next.keys().next().value as number | undefined
-          if (oldest === undefined) break
-          next.delete(oldest)
-        }
-        return next
-      })
-    }
-  )
+  } = useBrowserMessageCache(messages)
+  const noteCorrection = useHeightCorrection()
 
   const initialOffset = useMemo(
     () =>
@@ -187,14 +66,9 @@ function SavedInBrowserSurface({ messages }: { messages: SeedMessage[] }) {
       if (entry !== undefined) {
         const expected =
           cached?.height ?? estimatePx(message.heightClass, bucket)
-        if (Math.abs(actual - expected) > 0.5) {
-          const correctionKey = `${bucket}:${message.id}`
-          if (lastCorrections.current.get(correctionKey) !== actual) {
-            lastCorrections.current.set(correctionKey, actual)
-            recordCorrection(actual - expected)
-          }
-        }
-        persistSettled(correctionKeyFor(bucket, message.id), {
+        const correctionKey = `${bucket}:${message.id}`
+        noteCorrection(correctionKey, actual, expected)
+        persistSettled(correctionKey, {
           bucket,
           element,
           height: actual,
@@ -209,55 +83,54 @@ function SavedInBrowserSurface({ messages }: { messages: SeedMessage[] }) {
   })
   const { items, measureElement, measure, scrollToIndex, totalSize } = virtual
 
-  useLayoutEffect(() => {
-    const resize = pendingResize.current
-    if (!cacheReady || !scrollElement || !resize) return
-    pendingResize.current = null
-    measure()
-    const restore = () => {
-      if (resize.pinned) {
-        scrollToIndex(messages.length - 1, "end")
-      } else {
-        scrollToIndex(resize.rowIndex, "start")
-        adjustScrollBy(resize.offsetWithinRow)
-      }
-    }
-    restore()
-    return settleReadingAnchor(scrollElement, resize, restore)
-  }, [
-    adjustScrollBy,
-    bucket,
-    cacheReady,
-    messages.length,
-    measure,
+  useResizeRestore({
     scrollElement,
-    scrollToIndex,
-  ])
+    restoreKey: bucket,
+    enabled: cacheReady,
+    restore: (resize) => {
+      if (!resize || !scrollElement) return
+      measure()
+      const restore = () => {
+        if (resize.pinned) {
+          scrollToIndex(messages.length - 1, "end")
+        } else {
+          scrollToIndex(resize.rowIndex, "start")
+          adjustScrollBy(resize.offsetWithinRow)
+        }
+      }
+      restore()
+      return settleReadingAnchor(scrollElement, resize, restore)
+    },
+  })
 
   if (!hasLoadedCache) {
     return <MessageList messages={messages.slice(-INITIAL_PREVIEW_ROWS)} />
   }
 
   return (
-    <VirtualMessageSurface
+    <VirtualRows
       totalSize={totalSize}
       items={items}
       messages={messages}
       measureElement={measureElement}
-      contentFor={(message) => {
+      renderMessage={(message, _rowIndex, streamingText) => {
         const rendered = activeCache.has(message.id)
           ? htmlCache.get(hashContent(message.text))
           : undefined
-        return rendered === undefined
-          ? { kind: "markdown", markdown: message.text }
-          : { kind: "html", html: rendered }
+        return (
+          <MessageBubble
+            message={message}
+            content={
+              rendered === undefined
+                ? { kind: "markdown", markdown: message.text }
+                : { kind: "html", html: rendered }
+            }
+            streamingText={streamingText}
+          />
+        )
       }}
     />
   )
-}
-
-function correctionKeyFor(bucket: WidthBucket, messageId: string): string {
-  return `${bucket}:${messageId}`
 }
 
 export function SavedInBrowserApp({

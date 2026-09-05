@@ -1,3 +1,5 @@
+import type { ChatAppId } from "@/lib/chat-implementations"
+
 export type CacheLabel = "cold" | "partial" | "warm" | "n/a"
 
 export type BenchCommands = {
@@ -14,7 +16,7 @@ export type BenchRuntime = {
 }
 
 export type BenchSnapshot = {
-  appId: string
+  appId: ChatAppId
   cache: CacheLabel
   messageCount: number
   fcpMs: number | null

@@ -4,13 +4,59 @@ import { useCallback, useMemo } from "react"
 import { BenchProvider, useBench } from "@/lib/bench"
 import { MessageBubble } from "@/components/message-bubble"
 
-import type { HtmlIndexedMessage, SavedHtmlPayload } from "@/lib/build-index"
+import type {
+  HtmlIndexedMessage,
+  MarkdownIndexedMessage,
+  SavedHtmlPayload,
+  SavedMeasurementsPayload,
+} from "@/lib/build-index"
 
 import { ChatRuntime } from "./chat-runtime"
-import { ServerGeometrySurface } from "./server-geometry"
+import { SavedGeometrySurface } from "./saved-geometry"
 import { usePagedHtml } from "./use-paged-html"
 
-function SavedHtmlMode({
+function cacheLabel(payload: SavedMeasurementsPayload | SavedHtmlPayload) {
+  if (payload.warm) return "warm" as const
+  if (payload.measuredCount > 0) return "partial" as const
+  return "cold" as const
+}
+
+function SavedMarkdownSurface({
+  payload,
+  persistMeasurements,
+}: {
+  payload: SavedMeasurementsPayload
+  persistMeasurements: boolean
+}) {
+  const renderMessage = useCallback(
+    (message: MarkdownIndexedMessage, streamingText: string | undefined) => (
+      <MessageBubble
+        key={message.id}
+        message={message}
+        content={message.content}
+        contentHash={message.contentHash}
+        streamingText={streamingText}
+      />
+    ),
+    []
+  )
+  const last = payload.messages.at(-1)
+  return (
+    <ChatRuntime
+      lastMessage={last ? { id: last.id, text: last.content.markdown } : null}
+    >
+      <SavedGeometrySurface
+        messages={payload.messages}
+        index={payload.index}
+        initialWindowStart={payload.initialWindowStart}
+        persistMeasurements={persistMeasurements}
+        renderMessage={renderMessage}
+      />
+    </ChatRuntime>
+  )
+}
+
+function SavedHtmlSurface({
   payload,
   persistMeasurements,
 }: {
@@ -65,7 +111,7 @@ function SavedHtmlMode({
 
   return (
     <ChatRuntime lastMessage={payload.streamSource}>
-      <ServerGeometrySurface
+      <SavedGeometrySurface
         messages={payload.messages}
         index={payload.index}
         initialWindowStart={payload.initialWindowStart}
@@ -79,28 +125,30 @@ function SavedHtmlMode({
   )
 }
 
-export function SavedHtmlApp({
+export function SavedServerApp({
   payload,
   persistMeasurements = true,
 }: {
-  payload: SavedHtmlPayload
+  payload: SavedMeasurementsPayload | SavedHtmlPayload
   persistMeasurements?: boolean
 }) {
-  const cache = payload.warm
-    ? "warm"
-    : payload.measuredCount > 0
-      ? "partial"
-      : "cold"
   return (
     <BenchProvider
-      appId="saved-html"
-      cache={cache}
+      appId={payload.mode}
+      cache={cacheLabel(payload)}
       serverQueryMs={payload.serverQueryMs}
     >
-      <SavedHtmlMode
-        payload={payload}
-        persistMeasurements={persistMeasurements}
-      />
+      {payload.mode === "saved-html" ? (
+        <SavedHtmlSurface
+          payload={payload}
+          persistMeasurements={persistMeasurements}
+        />
+      ) : (
+        <SavedMarkdownSurface
+          payload={payload}
+          persistMeasurements={persistMeasurements}
+        />
+      )}
     </BenchProvider>
   )
 }

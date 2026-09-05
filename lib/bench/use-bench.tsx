@@ -10,6 +10,8 @@ import {
   useState,
   type ReactNode,
 } from "react"
+import type { ChatAppId } from "@/lib/chat-implementations"
+
 import type {
   BenchCommands,
   BenchRuntime,
@@ -37,7 +39,7 @@ export function BenchProvider({
   serverQueryMs = null,
   children,
 }: {
-  appId: string
+  appId: ChatAppId
   cache: CacheLabel
   serverQueryMs?: number | null
   children: ReactNode

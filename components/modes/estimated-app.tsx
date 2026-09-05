@@ -6,13 +6,11 @@ import {
   type WidthBucket,
 } from "@/lib/seed"
 import { BenchProvider } from "@/lib/bench"
+import { MessageBubble } from "@/components/message-bubble"
 
 import { ChatRuntime, useChatRuntime } from "./chat-runtime"
 import { useVirtualChat } from "./use-virtual-chat"
-import {
-  VirtualMessageSurface,
-  markdownMessageContent,
-} from "./virtual-message-surface"
+import { VirtualRows } from "./virtual-rows"
 
 function classSize(
   message: SeedMessage | undefined,
@@ -30,7 +28,7 @@ function EstimatedSurface({ messages }: { messages: SeedMessage[] }) {
   })
 
   return (
-    <VirtualMessageSurface
+    <VirtualRows
       totalSize={virtual.totalSize}
       items={virtual.items}
       messages={messages}
@@ -39,7 +37,13 @@ function EstimatedSurface({ messages }: { messages: SeedMessage[] }) {
         height: streamingThis ? undefined : `${row.size}px`,
         overflow: streamingThis ? "visible" : "hidden",
       })}
-      contentFor={markdownMessageContent}
+      renderMessage={(message, _rowIndex, streamingText) => (
+        <MessageBubble
+          message={message}
+          content={{ kind: "markdown", markdown: message.text }}
+          streamingText={streamingText}
+        />
+      )}
     />
   )
 }

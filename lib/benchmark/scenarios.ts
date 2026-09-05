@@ -3,11 +3,12 @@ import type {
   BenchRuntime,
   BenchSnapshot,
 } from "@/lib/bench/types"
+import type { ChatAppId } from "@/lib/chat-implementations"
 import { MESSAGE_COUNT } from "@/lib/seed"
 
 import { percentile } from "./stats.ts"
 import type { BenchmarkOptions } from "./options.ts"
-import type { BenchmarkMode, BenchmarkRun, FrameSummary } from "./types.ts"
+import type { BenchmarkRun, FrameSummary } from "./types.ts"
 
 type PageTrace = {
   visibleAt: number | null
@@ -269,7 +270,7 @@ async function streamBottomError(page: Page): Promise<number | null> {
 export async function runOne(input: {
   browser: Browser
   options: BenchmarkOptions
-  mode: BenchmarkMode
+  mode: ChatAppId
   width: number
   run: number
 }): Promise<BenchmarkRun> {

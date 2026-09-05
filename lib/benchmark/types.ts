@@ -1,13 +1,4 @@
-export const BENCHMARK_MODES = [
-  "every-message",
-  "measured",
-  "estimated",
-  "saved-in-browser",
-  "saved-measurements",
-  "saved-html",
-] as const
-
-export type BenchmarkMode = (typeof BENCHMARK_MODES)[number]
+import type { ChatAppId } from "@/lib/chat-implementations"
 
 export type NumericSummary = {
   median: number | null
@@ -22,7 +13,7 @@ export type FrameSummary = {
 
 export type BenchmarkRun = {
   run: number
-  mode: BenchmarkMode
+  mode: ChatAppId
   width: number
   height: number
   dpr: number
@@ -68,7 +59,7 @@ export type BenchmarkMetadata = {
   layoutVersion: string
   productionBuild: true
   runsPerCell: number
-  modes: BenchmarkMode[]
+  modes: ChatAppId[]
   messageCount: number
   widths: number[]
   height: number
@@ -86,7 +77,7 @@ export type BenchmarkArtifact = {
 }
 
 export type BenchmarkSummaryRow = {
-  mode: BenchmarkMode
+  mode: ChatAppId
   width: number
   runs: number
   cacheLabels: string[]

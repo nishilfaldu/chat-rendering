@@ -1,37 +1,24 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { SeedMessage } from "@/lib/seed"
 import { BenchProvider, useBench } from "@/lib/bench"
+import { MessageBubble } from "@/components/message-bubble"
 
-import {
-  ChatRuntime,
-  useChatRuntime,
-  useBeforeWidthChange,
-} from "./chat-runtime"
-import {
-  useReadingAnchor,
-  settleReadingAnchor,
-  type ReadingAnchor,
-} from "./geometry-hooks"
+import { ChatRuntime, useChatRuntime } from "./chat-runtime"
+import { settleReadingAnchor } from "./geometry-hooks"
+import { useHeightCorrection, useResizeRestore } from "./measurement-hooks"
 import { useVirtualChat } from "./use-virtual-chat"
-import {
-  VirtualMessageSurface,
-  markdownMessageContent,
-} from "./virtual-message-surface"
+import { VirtualRows } from "./virtual-rows"
 
 const FLAT_ESTIMATE = 80
 
 function MeasuredSurface({ messages }: { messages: SeedMessage[] }) {
   const { scrollElement, widthBucket } = useChatRuntime()
-  const { anchor, capture } = useReadingAnchor(scrollElement)
-  const pendingResize = useRef<ReadingAnchor | null>(null)
-  useBeforeWidthChange(() => {
-    pendingResize.current = anchor.current ?? capture()
-  })
   const measuredRows = useRef(new Map<number, number>())
   const ignoreInitialScroll = useRef(true)
-  const { recordCorrection, setCache, snapshot } = useBench()
+  const { setCache, snapshot } = useBench()
+  const noteCorrection = useHeightCorrection()
 
   const virtual = useVirtualChat({
     messages,
@@ -41,26 +28,27 @@ function MeasuredSurface({ messages }: { messages: SeedMessage[] }) {
       const actual = element.getBoundingClientRect().height
       if (!Number.isFinite(actual) || actual <= 0) return FLAT_ESTIMATE
       const previous = measuredRows.current.get(rowIndex) ?? FLAT_ESTIMATE
-      if (Math.abs(actual - previous) > 0.5) {
-        recordCorrection(actual - previous)
-      }
+      noteCorrection(`${widthBucket}:${rowIndex}`, actual, previous)
       measuredRows.current.set(rowIndex, actual)
       return actual
     },
     enabled: scrollElement !== null,
   })
   const { measure, scrollToIndex } = virtual
-  useLayoutEffect(() => {
-    const saved = pendingResize.current
-    if (!saved || !scrollElement) return
-    pendingResize.current = null
-    measuredRows.current.clear()
-    measure()
-    const reveal = () =>
-      scrollToIndex(saved.rowIndex, saved.pinned ? "end" : "start")
-    reveal()
-    return settleReadingAnchor(scrollElement, saved, reveal)
-  }, [widthBucket, measure, scrollElement, scrollToIndex])
+
+  useResizeRestore({
+    scrollElement,
+    restoreKey: widthBucket,
+    restore: (saved) => {
+      if (!saved || !scrollElement) return
+      measuredRows.current.clear()
+      measure()
+      const reveal = () =>
+        scrollToIndex(saved.rowIndex, saved.pinned ? "end" : "start")
+      reveal()
+      return settleReadingAnchor(scrollElement, saved, reveal)
+    },
+  })
 
   useEffect(() => {
     if (!scrollElement) return
@@ -83,12 +71,18 @@ function MeasuredSurface({ messages }: { messages: SeedMessage[] }) {
   }, [scrollElement, setCache, snapshot.cache])
 
   return (
-    <VirtualMessageSurface
+    <VirtualRows
       totalSize={virtual.totalSize}
       items={virtual.items}
       messages={messages}
       measureElement={virtual.measureElement}
-      contentFor={markdownMessageContent}
+      renderMessage={(message, _rowIndex, streamingText) => (
+        <MessageBubble
+          message={message}
+          content={{ kind: "markdown", markdown: message.text }}
+          streamingText={streamingText}
+        />
+      )}
     />
   )
 }

@@ -1,10 +1,12 @@
 import path from "node:path"
 import process from "node:process"
 
-import { resolveChatAppId } from "@/lib/chat-implementations"
+import {
+  CHAT_APP_IDS,
+  resolveChatAppId,
+  type ChatAppId,
+} from "@/lib/chat-implementations"
 import { workspaceRoot } from "@/lib/seed/browser-harness"
-
-import { BENCHMARK_MODES, type BenchmarkMode } from "./types.ts"
 
 export const REPO_ROOT = workspaceRoot(import.meta.dirname)
 export const RESULTS_DIR = path.join(REPO_ROOT, "benchmarks", "results")
@@ -14,7 +16,7 @@ export type BenchmarkOptions = {
   url: string
   runs: number
   widths: number[]
-  modes: BenchmarkMode[]
+  modes: ChatAppId[]
   height: number
   dpr: number
   build: boolean
@@ -40,7 +42,7 @@ export function parseOptions(): BenchmarkOptions {
   const smoke = process.argv.includes("--smoke")
   const requestedModes = (valueAfter("--modes")?.split(",") ?? [])
     .map((mode) => resolveChatAppId(mode))
-    .filter((mode): mode is BenchmarkMode => mode !== null)
+    .filter((mode): mode is ChatAppId => mode !== null)
   return {
     url: valueAfter("--url") ?? DEFAULT_URL,
     runs: Number(valueAfter("--runs")) || (smoke ? 1 : 20),
@@ -48,7 +50,7 @@ export function parseOptions(): BenchmarkOptions {
       valueAfter("--widths"),
       smoke ? [768] : [480, 768, 1280]
     ),
-    modes: requestedModes.length > 0 ? requestedModes : [...BENCHMARK_MODES],
+    modes: requestedModes.length > 0 ? requestedModes : [...CHAT_APP_IDS],
     height: Number(valueAfter("--height")) || 900,
     dpr: Number(valueAfter("--dpr")) || 1,
     build: !process.argv.includes("--no-build"),

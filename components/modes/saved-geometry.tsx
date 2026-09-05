@@ -9,7 +9,6 @@ import {
   type ReactNode,
 } from "react"
 import { widthBucket, type WidthBucket } from "@/lib/seed"
-import { useBench } from "@/lib/bench"
 import { CHAT_PIN_THRESHOLD_PX } from "@/hooks/use-stick-to-bottom"
 
 import type {
@@ -19,15 +18,14 @@ import type {
   ServerChatIndex,
 } from "@/lib/build-index"
 
-import { useBeforeWidthChange, useChatRuntime } from "./chat-runtime"
+import { useChatRuntime } from "./chat-runtime"
 import {
-  useReadingAnchor,
-  useSettledMeasurement,
   settleReadingAnchor,
-  type ReadingAnchor,
+  useSettledMeasurement,
 } from "./geometry-hooks"
+import { useHeightCorrection, useResizeRestore } from "./measurement-hooks"
 import { useVirtualChat } from "./use-virtual-chat"
-import { VirtualRows } from "./virtual-message-surface"
+import { VirtualRows } from "./virtual-rows"
 
 export type IndexedMessage = MarkdownIndexedMessage | HtmlIndexedMessage
 
@@ -53,7 +51,7 @@ function rowAtOffset(table: BucketTable, offset: number): number {
   return Math.min(Math.max(low, 0), Math.max(table.offsets.length - 1, 0))
 }
 
-export function ServerGeometrySurface<Message extends IndexedMessage>({
+export function SavedGeometrySurface<Message extends IndexedMessage>({
   messages,
   index,
   initialWindowStart,
@@ -75,48 +73,24 @@ export function ServerGeometrySurface<Message extends IndexedMessage>({
     streamingText: string | undefined
   ) => ReactNode
 }) {
-  const {
-    scrollElement,
-    scrollToOffset,
-    streaming,
-    widthBucket: bucket,
-  } = useChatRuntime()
+  const { scrollElement, scrollToOffset, widthBucket: bucket } =
+    useChatRuntime()
   const hydrated = useSyncExternalStore(
     subscribeToHydration,
     () => true,
     () => false
   )
   const bucketRef = useRef(bucket)
-  const pendingResize = useRef<ReadingAnchor | null>(null)
-  const lastCorrections = useRef(new Map<string, number>())
-  const { recordCorrection } = useBench()
-  const { capture, anchor } = useReadingAnchor(scrollElement)
+  const noteCorrection = useHeightCorrection()
   const fallbackTable = index.buckets[widthBucket(800)]
   if (!fallbackTable) {
-    throw new Error("server height index has no default width bucket")
+    throw new Error("saved height index has no default width bucket")
   }
   const table = index.buckets[bucket] ?? fallbackTable
 
   useLayoutEffect(() => {
     bucketRef.current = bucket
   }, [bucket])
-
-  const captureBeforeResize = useCallback(() => {
-    if (!scrollElement) return
-    const captured = anchor.current ?? capture()
-    pendingResize.current = captured ?? {
-      rowIndex: rowAtOffset(table, scrollElement.scrollTop),
-      offsetWithinRow:
-        scrollElement.scrollTop -
-        (table.offsets[rowAtOffset(table, scrollElement.scrollTop)] ?? 0),
-      pinned:
-        scrollElement.scrollHeight -
-          scrollElement.scrollTop -
-          scrollElement.clientHeight <=
-        CHAT_PIN_THRESHOLD_PX,
-    }
-  }, [anchor, capture, scrollElement, table])
-  useBeforeWidthChange(captureBeforeResize)
 
   const persistSettled = useSettledMeasurement<PendingServerMeasurement>(
     async ({ rowIndex, px, bucket: measuredBucket }) => {
@@ -164,10 +138,7 @@ export function ServerGeometrySurface<Message extends IndexedMessage>({
       if (!Number.isFinite(actual) || actual <= 0) return cached
       if (entry !== undefined && Math.abs(actual - cached) > 0.5) {
         const correctionKey = `${measuredBucket}:${message.id}`
-        if (lastCorrections.current.get(correctionKey) !== actual) {
-          lastCorrections.current.set(correctionKey, actual)
-          recordCorrection(actual - cached)
-        }
+        noteCorrection(correctionKey, actual, cached)
         persistSettled(correctionKey, {
           rowIndex,
           px: actual,
@@ -183,28 +154,36 @@ export function ServerGeometrySurface<Message extends IndexedMessage>({
   })
   const { items: visibleItems, measure, measureElement, totalSize } = virtual
 
-  useLayoutEffect(() => {
-    if (!hydrated || !scrollElement || messages.length === 0) return
-    measure()
-    const resize = pendingResize.current
-    pendingResize.current = null
-    if (!resize) return
-    const restoredTop = resize.pinned
-      ? table.total
-      : (table.offsets[resize.rowIndex] ?? 0) + resize.offsetWithinRow
-    scrollToOffset(restoredTop)
-    return settleReadingAnchor(scrollElement, resize, () =>
-      scrollToOffset(restoredTop)
-    )
-  }, [
-    bucket,
-    hydrated,
-    measure,
-    messages.length,
+  useResizeRestore({
     scrollElement,
-    scrollToOffset,
-    table,
-  ])
+    restoreKey: bucket,
+    enabled: hydrated && messages.length > 0,
+    fallback: () => {
+      if (!scrollElement) return null
+      const rowIndex = rowAtOffset(table, scrollElement.scrollTop)
+      return {
+        rowIndex,
+        offsetWithinRow:
+          scrollElement.scrollTop - (table.offsets[rowIndex] ?? 0),
+        pinned:
+          scrollElement.scrollHeight -
+            scrollElement.scrollTop -
+            scrollElement.clientHeight <=
+          CHAT_PIN_THRESHOLD_PX,
+      }
+    },
+    restore: (resize) => {
+      measure()
+      if (!resize || !scrollElement) return
+      const restoredTop = resize.pinned
+        ? table.total
+        : (table.offsets[resize.rowIndex] ?? 0) + resize.offsetWithinRow
+      scrollToOffset(restoredTop)
+      return settleReadingAnchor(scrollElement, resize, () =>
+        scrollToOffset(restoredTop)
+      )
+    },
+  })
 
   useEffect(() => {
     if (!hydrated) return
@@ -241,8 +220,8 @@ export function ServerGeometrySurface<Message extends IndexedMessage>({
           ? { minHeight: row.size }
           : undefined
       }}
-      renderMessage={(message, _rowIndex, streamingThis) =>
-        renderMessage(message, streamingThis ? streaming?.text : undefined)
+      renderMessage={(message, _rowIndex, streamingText) =>
+        renderMessage(message, streamingText)
       }
     />
   )
