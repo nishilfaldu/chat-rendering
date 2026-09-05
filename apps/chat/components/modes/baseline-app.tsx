@@ -1,181 +1,119 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useVirtualizer } from "@tanstack/react-virtual"
-import { generateMessages, replayStream } from "@chat-surface-bench/seed"
-import { BenchProvider, Hud, timeJump, useBench, useBenchSession } from "@chat-surface-bench/bench"
-import { ChatColumn } from "@workspace/ui/components/chat-column"
-import { ChatFrame } from "@workspace/ui/components/chat-frame"
-import { Composer } from "@workspace/ui/components/composer"
-import { MessageBubble } from "@workspace/ui/components/message-bubble"
-import { useStickToBottom } from "@workspace/ui/hooks/use-stick-to-bottom"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import type { SeedMessage } from "@chat-surface-bench/seed"
+import { BenchProvider, useBench } from "@chat-surface-bench/bench"
+
+import {
+  ChatRuntime,
+  useChatRuntime,
+  useBeforeWidthChange,
+} from "./chat-runtime"
+import {
+  useReadingAnchor,
+  settleReadingAnchor,
+  type ReadingAnchor,
+} from "./geometry-hooks"
+import { useVirtualChat } from "./use-virtual-chat"
+import {
+  VirtualMessageSurface,
+  markdownMessageContent,
+} from "./virtual-message-surface"
 
 const FLAT_ESTIMATE = 80
 
-function BaselineShell({
-  onReset,
-}: {
-  onReset: () => void
-}) {
-  const messages = useMemo(() => generateMessages(), [])
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null)
-  const [streaming, setStreaming] = useState<{ id: string; text: string } | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
-  const ignorePinScroll = useRef(true)
-  const { recordJump, setCache, snapshot, markFirstPaint } = useBench()
-  const { pinAndStick, stickIfPinned, release } = useStickToBottom(scrollEl)
-
-  const lastIndex = messages.length - 1
-
-  useLayoutEffect(() => {
-    setScrollEl(scrollRef.current)
-  }, [])
-
-  useBenchSession({
-    root: scrollEl,
-    scroll: scrollEl,
-    messageCount: messages.length,
+function BaselineSurface({ messages }: { messages: SeedMessage[] }) {
+  const { scrollElement, widthBucket } = useChatRuntime()
+  const { anchor, capture } = useReadingAnchor(scrollElement)
+  const pendingResize = useRef<ReadingAnchor | null>(null)
+  useBeforeWidthChange(() => {
+    pendingResize.current = anchor.current ?? capture()
   })
+  const measuredRows = useRef(new Map<number, number>())
+  const ignoreInitialScroll = useRef(true)
+  const { recordCorrection, setCache, snapshot } = useBench()
 
-  const virtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => scrollEl,
+  const virtual = useVirtualChat({
+    messages,
     estimateSize: () => FLAT_ESTIMATE,
-    enabled: scrollEl !== null,
-    useFlushSync: false,
+    measureElement: (element) => {
+      const rowIndex = Number(element.getAttribute("data-index"))
+      const actual = element.getBoundingClientRect().height
+      if (!Number.isFinite(actual) || actual <= 0) return FLAT_ESTIMATE
+      const previous = measuredRows.current.get(rowIndex) ?? FLAT_ESTIMATE
+      if (Math.abs(actual - previous) > 0.5) {
+        recordCorrection(actual - previous)
+      }
+      measuredRows.current.set(rowIndex, actual)
+      return actual
+    },
+    enabled: scrollElement !== null,
   })
-
-  const totalSize = virtualizer.getTotalSize()
-
+  const { measure, scrollToIndex } = virtual
   useLayoutEffect(() => {
-    if (!scrollEl || messages.length === 0) return
-    ignorePinScroll.current = true
-    virtualizer.scrollToIndex(lastIndex, { align: "end" })
-    pinAndStick()
-    markFirstPaint()
-    const id = window.setTimeout(() => {
-      ignorePinScroll.current = false
-    }, 500)
-    return () => window.clearTimeout(id)
-  }, [scrollEl, messages.length, lastIndex, virtualizer, pinAndStick, markFirstPaint])
-
-  useLayoutEffect(() => {
-    if (!scrollEl) return
-    stickIfPinned()
-  }, [totalSize, scrollEl, stickIfPinned])
+    const saved = pendingResize.current
+    if (!saved || !scrollElement) return
+    pendingResize.current = null
+    measuredRows.current.clear()
+    measure()
+    const reveal = () =>
+      scrollToIndex(saved.rowIndex, saved.pinned ? "end" : "start")
+    reveal()
+    return settleReadingAnchor(scrollElement, saved, reveal)
+  }, [widthBucket, measure, scrollElement, scrollToIndex])
 
   useEffect(() => {
-    if (!scrollEl || snapshot.cache === "warm") return
+    if (!scrollElement) return
+    const timer = window.setTimeout(() => {
+      ignoreInitialScroll.current = false
+    }, 500)
+    return () => window.clearTimeout(timer)
+  }, [scrollElement])
+
+  useEffect(() => {
+    if (!scrollElement || snapshot.cache === "warm") return
     const onScroll = () => {
-      if (ignorePinScroll.current) return
-      setCache("warm")
+      if (!ignoreInitialScroll.current) setCache("partial")
     }
-    scrollEl.addEventListener("scroll", onScroll, { passive: true, once: true })
-    return () => {
-      scrollEl.removeEventListener("scroll", onScroll)
-    }
-  }, [scrollEl, setCache, snapshot.cache])
-
-  async function onJumpTo(n: number) {
-    const index = Math.min(Math.max(n, 0), messages.length - 1)
-    release()
-    const ms = await timeJump(async () => {
-      virtualizer.scrollToIndex(index, { align: "start" })
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => resolve())
-      })
+    scrollElement.addEventListener("scroll", onScroll, {
+      passive: true,
+      once: true,
     })
-    recordJump(index, ms)
-  }
-
-  async function onStreamLast() {
-    const lastIndex = messages.length - 1
-    const last = messages[lastIndex]
-    if (!last) return
-    abortRef.current?.abort()
-    const ac = new AbortController()
-    abortRef.current = ac
-    pinAndStick()
-    virtualizer.scrollToIndex(lastIndex, { align: "end" })
-    setStreaming({ id: last.id, text: "" })
-    await replayStream({
-      text: last.text,
-      signal: ac.signal,
-      onToken: (text) => {
-        setStreaming({ id: last.id, text })
-        requestAnimationFrame(() => {
-          virtualizer.scrollToIndex(lastIndex, { align: "end" })
-          stickIfPinned()
-        })
-      },
-    })
-    if (!ac.signal.aborted) {
-      setStreaming(null)
-      stickIfPinned()
-    }
-  }
+    return () => scrollElement.removeEventListener("scroll", onScroll)
+  }, [scrollElement, setCache, snapshot.cache])
 
   return (
-    <ChatFrame
-      appId="baseline"
-      title="baseline"
-      implementsList={[
-        "@tanstack/react-virtual defaults",
-        "in-memory measurement cache",
-        "ResizeObserver per row",
-        "stick-to-bottom on load and while streaming",
-      ]}
-      doesNotList={["height-class estimates", "server index"]}
-      cacheLabel={snapshot.cache}
-      onJumpTo={onJumpTo}
-      onStreamLast={onStreamLast}
-      onCacheReset={onReset}
-      hud={<Hud />}
-    >
-      <ChatColumn scrollRef={scrollRef} composer={<Composer onSend={() => undefined} />}>
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          {virtualizer.getVirtualItems().map((row) => {
-            const message = messages[row.index]
-            if (!message) return null
-            return (
-              <div
-                key={row.key}
-                data-index={row.index}
-                ref={virtualizer.measureElement}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  transform: `translateY(${row.start}px)`,
-                }}
-              >
-                <MessageBubble
-                  message={message}
-                  streamingText={streaming?.id === message.id ? streaming.text : undefined}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </ChatColumn>
-    </ChatFrame>
+    <VirtualMessageSurface
+      totalSize={virtual.totalSize}
+      items={virtual.items}
+      messages={messages}
+      measureElement={virtual.measureElement}
+      contentFor={markdownMessageContent}
+    />
   )
 }
 
-export function BaselineApp() {
+export function BaselineApp({
+  messages,
+  serverQueryMs = null,
+}: {
+  messages: SeedMessage[]
+  serverQueryMs?: number | null
+}) {
   const [epoch, setEpoch] = useState(0)
-
   return (
-    <BenchProvider key={epoch} appId="baseline" cache="cold">
-      <BaselineShell onReset={() => setEpoch((value) => value + 1)} />
+    <BenchProvider
+      key={epoch}
+      appId="baseline"
+      cache="cold"
+      serverQueryMs={serverQueryMs}
+    >
+      <ChatRuntime
+        lastMessage={messages.at(-1) ?? null}
+        onCacheReset={() => setEpoch((value) => value + 1)}
+      >
+        <BaselineSurface messages={messages} />
+      </ChatRuntime>
     </BenchProvider>
   )
 }

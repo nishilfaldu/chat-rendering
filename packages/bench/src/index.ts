@@ -1,4 +1,13 @@
-export { BenchProvider, useBench } from "./use-bench.tsx";
-export { Hud } from "./hud.tsx";
-export { timeJump, useBenchSession, useDomNodeCount, useScrollFps } from "./hooks.ts";
-export type { BenchSnapshot, CacheLabel } from "./types.ts";
+export { BenchProvider, useBench } from "./use-bench.tsx"
+export {
+  convergeVirtualJump,
+  timeJump,
+  useBenchSession,
+  useDomNodeCount,
+} from "./hooks.ts"
+export type {
+  BenchCommands,
+  BenchRuntime,
+  BenchSnapshot,
+  CacheLabel,
+} from "./types.ts"

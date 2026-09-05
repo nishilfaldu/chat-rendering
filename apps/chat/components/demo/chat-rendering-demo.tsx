@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import type { BenchSnapshot } from "@chat-surface-bench/bench"
-import { APP_LINKS, type ChatAppId } from "@workspace/ui/components/chat-frame"
+import {
+  APP_LINKS,
+  conversationPath,
+  type ChatAppId,
+} from "@workspace/ui/lib/chat-implementations"
 import {
   ArrowDown,
   ArrowUpRight,
@@ -580,9 +584,6 @@ export function ChatRenderingDemo() {
             <p>An experiment in keeping long conversations responsive.</p>
           </div>
           <nav aria-label="Project">
-            <a href="/notes">
-              How it works <ArrowUpRight size={14} />
-            </a>
             <a href="/results">
               Measurements <ArrowUpRight size={14} />
             </a>
@@ -692,7 +693,7 @@ export function ChatRenderingDemo() {
                       ref={refs[index]}
                       key={`${mode}-${revision}`}
                       title={`${APP_LINKS.find((item) => item.id === mode)?.label} conversation`}
-                      src={`/${mode}?embed=1&run=${revision}`}
+                      src={`${conversationPath(mode)}?run=${revision}`}
                     />
                     {marked ? (
                       <div className="bench-anchor" aria-hidden="true">

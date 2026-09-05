@@ -1,30 +1,58 @@
-# chat-surface-bench
+# Chat rendering
 
-A public-numbers bench for one claim: a **server-persisted, per-width-bucket, measured-height index** makes a 10,000-message chat surface fast and honest compared with naive, baseline, and orbit-style.
+An experiment in keeping long conversations responsive while messages stream, the window resizes, and the reader moves through history.
 
-Metrics on the HUD: **first paint**, **scroll fps**, **jump-to-N**. All four modes are one Next app.
+The public page is one workbench: pick an implementation, run an experiment, and read diagnostic timings from this browser. Downloadable production results live at `/results`.
 
-| Path | What it is |
-|------|------------|
-| `/naive` | All 10k rows in the DOM. Painful, but truthful heights. |
-| `/baseline` | TanStack Virtual + live `measureElement`. Cold until you scroll. |
-| `/orbit-style` | Fixed class-estimate row heights. Short estimates clip. |
-| `/server-index` | Sqlite index of **measured** px per width bucket + prerendered HTML for the visible window. |
+## Run locally
 
-Every mode opens at the **bottom** (chat, not a document) and sticks there while the last message streams, unless you scroll away.
-
-## Run
-
-```bash
+```sh
 pnpm install
-pnpm seed          # writes data/bench.sqlite (messages, html, measured heights)
-pnpm dev           # http://localhost:3000 → /naive
+pnpm seed
+pnpm dev
 ```
 
-`pnpm seed` starts the chat app if it is not already running, opens `/internal/measure?w=` at 400 / 800 / 1440, and stores `offsetHeight` into `height_measurements`. Warm on `/server-index` means that table is complete — it is not a hardcoded badge.
+Open http://localhost:3000. Seeding generates a deterministic 10,000-message SQLite conversation, prerenders message content, and measures heights at 32px content-width intervals. It reuses the local development server when available. Set `CHAT_URL` to use a different measurement server.
 
-## Numbers
+## Implementations
 
-First paint starts when `BenchProvider` mounts and includes `generateMessages()` for the client-generated modes. `/server-index` does not call `generateMessages()` on the client; it reads sqlite and paints prerendered HTML.
+| Implementation                | Approach                                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| Every message                 | Render every message. Natural geometry with a large DOM.                                       |
+| Measured in the browser       | Virtualize and measure messages in the browser.                                                |
+| Estimated by content type     | Use fixed estimates by content type. An intentionally imperfect control that can clip content. |
+| Saved in this browser         | Reuse heights and rendered content saved in this browser.                                      |
+| Saved measurements            | Load saved measurements; render Markdown in the browser.                                       |
+| Saved measurements + HTML     | Load saved measurements and fetch prerendered HTML in bounded windows.                         |
 
-Jump time is the scroll plus two animation frames (and, on server-index, fetching HTML for the target window).
+The workbench loads each implementation in a conversation frame. Server-backed modes accept `?geometry=cold` or `?geometry=partial` to omit all or half the saved measurements without modifying the database. Browser-cache mode exposes a reset command to benchmark scripts.
+
+All modes open at the bottom. Streaming follows the end until the reader moves into history. The public comparison uses equal-width surfaces and runs the same selected scenario in each; manual scrolling is independent.
+
+## Verify behavior
+
+```sh
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm verify
+CHECK_URL=http://localhost:3000 pnpm test:behavior
+CHECK_URL=http://localhost:3000 pnpm test:ui
+CHECK_URL=http://localhost:3000 pnpm test:resize
+```
+
+The browser checks require Chrome. Set `CHROME_PATH` if necessary. They exercise rapid scrolling, streaming while reading history, the workbench controls, and responsive layout.
+
+## Reproduce measurements
+
+```sh
+pnpm bench
+```
+
+The default production protocol runs each implementation 20 times at 480px, 768px, and 1280px. It records raw observations, median/p95 summaries, browser and corpus versions, cache conditions, and Git revision/dirty state in `benchmarks/results/`.
+
+For a shorter check: `pnpm bench:smoke`. Limited runs are explicitly labeled exploratory in the results page. They are not evidence for reliable tail-latency claims.
+
+The production suite includes navigation, database work, transfer, parsing, hydration, and rendering. It does not isolate geometry costs. In-page readings include diagnostic overhead; simultaneous comparisons share browser resources. Empty viewport samples and visible loading placeholders are counted separately.
+
+The corpus contains text, Markdown, code, and fixed-size image placeholders. It replays text locally and does not call a model API. See [the experimental contract](docs/benchmark-contract.md) and [benchmark methodology](benchmarks/README.md).

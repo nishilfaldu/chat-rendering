@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
+import { ChatRenderingDemo } from "@/components/demo/chat-rendering-demo"
 
 export default function Page() {
-  redirect("/naive")
+  return <ChatRenderingDemo />
 }
