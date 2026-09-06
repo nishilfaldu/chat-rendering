@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3000",
-    "build": "next build",
+    "dev": "node scripts/unpack-sqlite.mjs && next dev --port 3000",
+    "build": "node scripts/unpack-sqlite.mjs --required && next build",
     "start": "next start",
+    "pack:sqlite": "node scripts/pack-sqlite.mjs",
+    "seed:artifact": "tsx scripts/seed-artifact.ts",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,css,mjs,json,md}\"",
     "typecheck": "tsc --noEmit",

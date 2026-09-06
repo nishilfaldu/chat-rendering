@@ -188,11 +188,14 @@ function persisted(measurement: HeightMeasurement) {
 }
 
 export function upsertHeight(measurement: HeightMeasurement): void {
-  prepareHeightUpsert(getDb()).run(persisted(measurement))
+  const database = getDb()
+  if (database.readonly) return
+  prepareHeightUpsert(database).run(persisted(measurement))
 }
 
 export function replaceHeights(rows: HeightMeasurement[]): void {
   const database = getDb()
+  if (database.readonly) return
   const upsert = prepareHeightUpsert(database)
   database.transaction((batch: HeightMeasurement[]) => {
     for (const row of batch) upsert.run(persisted(row))
@@ -200,5 +203,7 @@ export function replaceHeights(rows: HeightMeasurement[]): void {
 }
 
 export function clearHeights(): void {
-  getDb().exec("DELETE FROM height_measurements")
+  const database = getDb()
+  if (database.readonly) return
+  database.exec("DELETE FROM height_measurements")
 }
