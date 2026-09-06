@@ -21,12 +21,6 @@ try {
   await page.waitForFunction(
     () => !document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
   )
-  assert.deepEqual(
-    await page.$$eval(".bench-page a", (links) =>
-      links.map((link) => link.getAttribute("href"))
-    ),
-    ["/results"]
-  )
   assert.equal(
     await page.$$eval(
       ".bench-inspector button, .bench-inspector select",
@@ -187,14 +181,6 @@ try {
     path: "/tmp/chat-rendering-checks/mobile.png",
     fullPage: true,
   })
-  for (const route of ["/results"]) {
-    const response = await page.goto(base + route)
-    assert.equal(response?.status(), 200, route)
-  }
-  assert.equal(
-    await page.evaluate(async () => (await fetch("/api/results")).status),
-    200
-  )
   assert.deepEqual(errors, [])
   console.log("UI flows and responsive layout passed")
 } finally {

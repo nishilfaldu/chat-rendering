@@ -6,7 +6,7 @@ import {
   conversationPath,
   type ChatAppId,
 } from "@/lib/chat-implementations"
-import { ArrowDown, ArrowUpRight, Play, Square } from "lucide-react"
+import { ArrowDown, Play, Square } from "lucide-react"
 
 import { ImplementationPicker } from "./implementation-picker"
 import {
@@ -156,11 +156,6 @@ export function ChatRenderingDemo() {
             <h1>Chat rendering</h1>
             <p>An experiment in keeping long conversations responsive.</p>
           </div>
-          <nav aria-label="Project">
-            <a href="/results">
-              Measurements <ArrowUpRight size={14} />
-            </a>
-          </nav>
         </header>
         <section
           className="bench-workbench"

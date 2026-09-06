@@ -1,7 +1,30 @@
 import assert from "node:assert/strict"
-import { runFastScroll } from "./scenarios.ts"
-import puppeteer from "puppeteer-core"
+import puppeteer, { type Page } from "puppeteer-core"
 import { chromeExecutable } from "@/lib/seed/browser-harness"
+
+async function runFastScroll(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const scroll = document.querySelector<HTMLElement>("[data-chat-scroll]")
+    if (!scroll) throw new Error("chat scroll element is missing")
+    const started = performance.now()
+    const duration = 1_200
+
+    await new Promise<void>((resolve) => {
+      const tick = (now: number) => {
+        const progress = Math.min(1, (now - started) / duration)
+        const triangle =
+          progress < 0.55 ? progress / 0.55 : (1 - progress) / 0.45
+        const ratio = 1 - Math.max(0, triangle) * 0.85
+        scroll.scrollTop =
+          ratio * Math.max(0, scroll.scrollHeight - scroll.clientHeight)
+        if (progress < 1) requestAnimationFrame(tick)
+        else resolve()
+      }
+      requestAnimationFrame(tick)
+    })
+  })
+}
+
 const browser = await puppeteer.launch({
   executablePath: chromeExecutable(),
   headless: true,

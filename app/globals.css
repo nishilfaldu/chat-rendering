@@ -233,28 +233,6 @@ body {
   font-size: 15px;
   line-height: 1.6;
 }
-.bench-header nav {
-  display: flex;
-  gap: 28px;
-  font-size: 13px;
-  color: #a0a0a0;
-  white-space: nowrap;
-}
-.bench-page a {
-  text-underline-offset: 4px;
-}
-.bench-page a:hover {
-  color: #fff;
-}
-.bench-header a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.bench-header a svg {
-  width: 12px;
-  opacity: 0.6;
-}
 .bench-workbench {
   border: 1px solid #242424;
   border-radius: 8px;
@@ -684,57 +662,6 @@ body {
 .bench-page .bench-picker-menu button:focus-visible {
   outline: none;
 }
-.bench-document {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 44px 28px 80px;
-}
-.bench-document > a {
-  color: #b7c9db;
-  font-size: 13px;
-}
-.bench-document h1 {
-  font-size: 30px;
-  letter-spacing: -0.7px;
-  margin: 36px 0 14px;
-}
-.bench-document h2 {
-  font-size: 18px;
-  margin: 32px 0 12px;
-}
-.bench-document p,
-.bench-document li {
-  font-size: 14px;
-  line-height: 1.9;
-  color: #a9b0ba;
-  margin: 10px 0;
-  max-width: 78ch;
-}
-.bench-document pre {
-  padding: 16px;
-  background: #1b1e22;
-  border: 1px solid #303237;
-  border-radius: 5px;
-  overflow-x: auto;
-  font-size: 12px;
-  margin-top: 15px;
-}
-.bench-document table {
-  width: 100%;
-  font-size: 12px;
-  text-align: left;
-  border-collapse: collapse;
-}
-.bench-document td,
-.bench-document th {
-  padding: 12px 10px;
-  border-bottom: 1px solid #303237;
-  font-variant-numeric: tabular-nums;
-}
-.bench-document th {
-  color: #a6afb9;
-  font-weight: 500;
-}
 @media (max-width: 1100px) {
   .bench-shell {
     padding: 36px 28px 24px;
@@ -769,10 +696,6 @@ body {
   .bench-header p {
     font-size: 14px;
     max-width: 30ch;
-  }
-  .bench-header nav {
-    gap: 24px;
-    font-size: 12px;
   }
   .bench-approach {
     padding: 14px;
