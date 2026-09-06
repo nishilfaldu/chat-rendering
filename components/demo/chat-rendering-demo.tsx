@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import {
   IMPLEMENTATIONS,
   conversationPath,
@@ -156,6 +157,9 @@ export function ChatRenderingDemo() {
             <h1>Chat rendering</h1>
             <p>An experiment in keeping long conversations responsive.</p>
           </div>
+          <Link className="bench-docs-link" href="/docs">
+            How it works
+          </Link>
         </header>
         <section
           className="bench-workbench"

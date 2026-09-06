@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server"
-import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
-  hashContent,
-  isWidthBucket,
-} from "@/lib/seed"
+import { CACHE_REVISION, hashContent, isWidthBucket } from "@/lib/seed"
 import { getMessage, upsertHeight } from "@/lib/seed/db"
 
 export const dynamic = "force-dynamic"
@@ -43,9 +37,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     messageId,
     widthBucket: bucket,
     contentHash,
-    datasetVersion: DATASET_VERSION,
-    rendererVersion: RENDERER_VERSION,
-    layoutVersion: LAYOUT_VERSION,
+    cacheRevision: CACHE_REVISION,
     px,
     measuredAt: Date.now(),
     source: "client",

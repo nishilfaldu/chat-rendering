@@ -1,14 +1,7 @@
 "use client"
 
 import { useEffect, useLayoutEffect, useMemo, useState } from "react"
-import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
-  hashContent,
-  type SeedMessage,
-  type WidthBucket,
-} from "@/lib/seed"
+import { hashContent, type SeedMessage, type WidthBucket } from "@/lib/seed"
 import { useBench, type CacheLabel } from "@/lib/bench"
 
 import {
@@ -100,9 +93,6 @@ export function useBrowserMessageCache(messages: SeedMessage[]) {
         messageId: message.id,
         widthBucket: measuredBucket,
         contentHash,
-        datasetVersion: DATASET_VERSION,
-        rendererVersion: RENDERER_VERSION,
-        layoutVersion: LAYOUT_VERSION,
         height,
         settledAt: Date.now(),
       }

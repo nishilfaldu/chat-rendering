@@ -2,9 +2,7 @@ import type Database from "better-sqlite3"
 
 import { getDb } from "./database.ts"
 import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
+  CACHE_REVISION,
   SESSION_ID,
   WIDTH_BUCKETS,
   type HeightMeasurement,
@@ -54,12 +52,10 @@ export function heightMeasurementCount(): number {
       `SELECT COUNT(*) AS n
        FROM height_measurements h
        JOIN messages m ON m.id = h.message_id AND m.content_hash = h.content_hash
-       WHERE h.renderer_version = ?
-         AND h.dataset_version = ?
-         AND h.layout_version = ?
+       WHERE h.cache_revision = ?
          AND h.settled = 1`
     )
-    .get(RENDERER_VERSION, DATASET_VERSION, LAYOUT_VERSION) as { n: number }
+    .get(CACHE_REVISION) as { n: number }
   return row.n
 }
 
@@ -117,9 +113,7 @@ export function listIndex(input: {
        LEFT JOIN height_measurements h
          ON h.message_id = m.id
         AND h.width_bucket = ?
-        AND h.dataset_version = ?
-        AND h.renderer_version = ?
-        AND h.layout_version = ?
+        AND h.cache_revision = ?
         AND h.settled = 1
         AND h.content_hash = m.content_hash
        WHERE m.session_id = ?
@@ -127,9 +121,7 @@ export function listIndex(input: {
     )
     .all(
       input.widthBucket,
-      DATASET_VERSION,
-      RENDERER_VERSION,
-      LAYOUT_VERSION,
+      CACHE_REVISION,
       sessionId,
       ...(boundedLimit === undefined ? [] : [boundedLimit])
     ) as MessageIndexRow[]
@@ -138,9 +130,9 @@ export function listIndex(input: {
 export function getPrerenderedHtml(messageId: string): string | null {
   const row = getDb()
     .prepare(
-      `SELECT html FROM prerendered_html WHERE message_id = ? AND renderer_version = ?`
+      `SELECT html FROM prerendered_html WHERE message_id = ? AND cache_revision = ?`
     )
-    .get(messageId, RENDERER_VERSION) as { html: string } | undefined
+    .get(messageId, CACHE_REVISION) as { html: string } | undefined
   return row?.html ?? null
 }
 
@@ -153,9 +145,9 @@ export function getPrerenderedHtmlBatch(
     .prepare(
       `SELECT message_id AS id, html
        FROM prerendered_html
-       WHERE renderer_version = ? AND message_id IN (${placeholders})`
+       WHERE cache_revision = ? AND message_id IN (${placeholders})`
     )
-    .all(RENDERER_VERSION, ...messageIds) as Array<{ id: string; html: string }>
+    .all(CACHE_REVISION, ...messageIds) as Array<{ id: string; html: string }>
   return new Map(rows.map((row) => [row.id, row.html]))
 }
 
@@ -167,22 +159,22 @@ export function listPrerenderedHtml(
       `SELECT p.message_id AS id, p.html AS html
        FROM prerendered_html p
        JOIN messages m ON m.id = p.message_id
-       WHERE m.session_id = ? AND p.renderer_version = ?`
+       WHERE m.session_id = ? AND p.cache_revision = ?`
     )
-    .all(sessionId, RENDERER_VERSION) as Array<{ id: string; html: string }>
+    .all(sessionId, CACHE_REVISION) as Array<{ id: string; html: string }>
   return new Map(rows.map((row) => [row.id, row.html]))
 }
 
 function prepareHeightUpsert(database: Database.Database): Database.Statement {
   return database.prepare(
     `INSERT INTO height_measurements (
-       message_id, width_bucket, content_hash, dataset_version, renderer_version, layout_version,
+       message_id, width_bucket, content_hash, cache_revision,
        px, measured_at, source, settled
      ) VALUES (
-       @messageId, @widthBucket, @contentHash, @datasetVersion, @rendererVersion, @layoutVersion,
+       @messageId, @widthBucket, @contentHash, @cacheRevision,
        @px, @measuredAt, @source, @settled
      )
-     ON CONFLICT(message_id, width_bucket, content_hash, dataset_version, renderer_version, layout_version)
+     ON CONFLICT(message_id, width_bucket, content_hash, cache_revision)
      DO UPDATE SET
        px = excluded.px,
        measured_at = excluded.measured_at,

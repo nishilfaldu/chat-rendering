@@ -3,7 +3,7 @@ import { generateMessages } from "./generate.ts"
 import { hashContent } from "./markdown.ts"
 import { prerenderMessage } from "./prerender.ts"
 import { messageCount } from "./queries.ts"
-import { DATASET_VERSION, MESSAGE_COUNT, RENDERER_VERSION } from "./types.ts"
+import { CACHE_REVISION, MESSAGE_COUNT } from "./types.ts"
 
 export async function seedDatabase(options?: {
   force?: boolean
@@ -11,11 +11,11 @@ export async function seedDatabase(options?: {
   const database = getDb()
   const existing = messageCount()
   const metadata = database
-    .prepare("SELECT value FROM bench_metadata WHERE key = 'dataset_version'")
+    .prepare("SELECT value FROM bench_metadata WHERE key = 'cache_revision'")
     .get() as { value: string } | undefined
   if (
     existing === MESSAGE_COUNT &&
-    metadata?.value === DATASET_VERSION &&
+    metadata?.value === CACHE_REVISION &&
     options?.force !== true
   ) {
     return { count: existing, sqlite: sqlitePath() }
@@ -45,12 +45,12 @@ export async function seedDatabase(options?: {
   })()
 
   const insertHtml = database.prepare(
-    `INSERT INTO prerendered_html (message_id, html, renderer_version) VALUES (?, ?, ?)`
+    `INSERT INTO prerendered_html (message_id, html, cache_revision) VALUES (?, ?, ?)`
   )
   const writeHtml = database.transaction(
     (rows: Array<{ id: string; html: string }>) => {
       for (const row of rows) {
-        insertHtml.run(row.id, row.html, RENDERER_VERSION)
+        insertHtml.run(row.id, row.html, CACHE_REVISION)
       }
     }
   )
@@ -69,9 +69,9 @@ export async function seedDatabase(options?: {
   }
   database
     .prepare(
-      `INSERT INTO bench_metadata (key, value) VALUES ('dataset_version', ?)
+      `INSERT INTO bench_metadata (key, value) VALUES ('cache_revision', ?)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value`
     )
-    .run(DATASET_VERSION)
+    .run(CACHE_REVISION)
   return { count: messageCount(), sqlite: sqlitePath() }
 }

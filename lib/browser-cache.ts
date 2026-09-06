@@ -1,12 +1,8 @@
-import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
-  type WidthBucket,
-} from "@/lib/seed"
+import { CACHE_REVISION, type WidthBucket } from "@/lib/seed"
 
 const DB_NAME = "railgun-saved-in-browser"
-const DB_VERSION = 2
+// One cache generation; upgrading drops only derived heights and HTML.
+const DB_VERSION = 2 + Number(CACHE_REVISION)
 const HEIGHT_STORE = "heights"
 const HTML_STORE = "html"
 const HTML_MEMORY_LIMIT = 2_000
@@ -17,9 +13,6 @@ export type BrowserCacheHeightRow = {
   messageId: string
   widthBucket: WidthBucket
   contentHash: number
-  datasetVersion: string
-  rendererVersion: string
-  layoutVersion: string
   height: number
   settledAt: number
 }
@@ -28,8 +21,6 @@ type BrowserCacheHtmlRow = {
   key: string
   widthBucket: WidthBucket
   contentHash: number
-  rendererVersion: string
-  layoutVersion: string
   html: string
   settledAt: number
 }
@@ -45,14 +36,11 @@ export function browserCacheKey(input: {
     input.messageId,
     input.widthBucket,
     input.contentHash,
-    DATASET_VERSION,
-    RENDERER_VERSION,
-    LAYOUT_VERSION,
   ].join(":")
 }
 
 function htmlCacheKey(contentHash: number, widthBucket: WidthBucket): string {
-  return [contentHash, widthBucket, RENDERER_VERSION, LAYOUT_VERSION].join(":")
+  return [contentHash, widthBucket].join(":")
 }
 
 let databasePromise: Promise<IDBDatabase> | null = null
@@ -103,16 +91,7 @@ export async function loadBrowserCacheRows(
     request.onerror = () => reject(request.error)
     request.onsuccess = () => resolve(request.result as BrowserCacheHeightRow[])
   })
-  return new Map(
-    rows
-      .filter(
-        (row) =>
-          row.datasetVersion === DATASET_VERSION &&
-          row.rendererVersion === RENDERER_VERSION &&
-          row.layoutVersion === LAYOUT_VERSION
-      )
-      .map((row) => [row.messageId, row])
-  )
+  return new Map(rows.map((row) => [row.messageId, row]))
 }
 
 export async function loadBrowserCacheHtml(
@@ -130,14 +109,7 @@ export async function loadBrowserCacheHtml(
   })
   rows.sort((a, b) => b.settledAt - a.settledAt)
   return new Map(
-    rows
-      .filter(
-        (row) =>
-          row.rendererVersion === RENDERER_VERSION &&
-          row.layoutVersion === LAYOUT_VERSION
-      )
-      .slice(0, HTML_MEMORY_LIMIT)
-      .map((row) => [row.contentHash, row.html])
+    rows.slice(0, HTML_MEMORY_LIMIT).map((row) => [row.contentHash, row.html])
   )
 }
 
@@ -158,8 +130,6 @@ export async function putBrowserCacheRow(
       key: htmlCacheKey(row.contentHash, row.widthBucket),
       widthBucket: row.widthBucket,
       contentHash: row.contentHash,
-      rendererVersion: row.rendererVersion,
-      layoutVersion: row.layoutVersion,
       html,
       settledAt: row.settledAt,
     } satisfies BrowserCacheHtmlRow)

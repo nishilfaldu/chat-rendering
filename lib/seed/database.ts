@@ -40,7 +40,7 @@ export function getDb(): Database.Database {
     CREATE TABLE IF NOT EXISTS prerendered_html (
       message_id TEXT PRIMARY KEY,
       html TEXT NOT NULL,
-      renderer_version TEXT NOT NULL
+      cache_revision TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS bench_metadata (
       key TEXT PRIMARY KEY,
@@ -48,6 +48,7 @@ export function getDb(): Database.Database {
     );
   `)
   migrateMessages(database)
+  migrateRenderingCache(database)
   migrateHeightMeasurements(database)
   databaseSingleton = database
   return database
@@ -84,9 +85,7 @@ function migrateHeightMeasurements(database: Database.Database): void {
   const names = new Set(columns.map((column) => column.name))
   const current =
     names.has("content_hash") &&
-    names.has("dataset_version") &&
-    names.has("renderer_version") &&
-    names.has("layout_version") &&
+    names.has("cache_revision") &&
     names.has("measured_at") &&
     names.has("source") &&
     names.has("settled")
@@ -98,9 +97,7 @@ function migrateHeightMeasurements(database: Database.Database): void {
       message_id TEXT NOT NULL,
       width_bucket INTEGER NOT NULL,
       content_hash INTEGER NOT NULL,
-      dataset_version TEXT NOT NULL,
-      renderer_version TEXT NOT NULL,
-      layout_version TEXT NOT NULL,
+      cache_revision TEXT NOT NULL,
       px REAL NOT NULL,
       measured_at INTEGER NOT NULL,
       source TEXT NOT NULL,
@@ -109,13 +106,71 @@ function migrateHeightMeasurements(database: Database.Database): void {
         message_id,
         width_bucket,
         content_hash,
-        dataset_version,
-        renderer_version,
-        layout_version
+        cache_revision
       ),
       FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS heights_current_lookup
-      ON height_measurements(width_bucket, dataset_version, renderer_version, layout_version, settled);
+      ON height_measurements(width_bucket, cache_revision, settled);
   `)
+}
+
+// Migrate the old three-version format without discarding compatible seed heights.
+function migrateRenderingCache(database: Database.Database): void {
+  const htmlColumns = database
+    .prepare("PRAGMA table_info(prerendered_html)")
+    .all() as Array<{ name: string }>
+  if (!htmlColumns.some((column) => column.name === "renderer_version")) return
+  database.transaction(() => {
+    database.exec(`
+      ALTER TABLE prerendered_html RENAME TO old_prerendered_html;
+      CREATE TABLE prerendered_html (
+        message_id TEXT PRIMARY KEY, html TEXT NOT NULL, cache_revision TEXT NOT NULL
+      );
+    `)
+    database
+      .prepare(
+        `INSERT INTO prerendered_html SELECT message_id, html, ? FROM old_prerendered_html WHERE renderer_version = 'v2'`
+      )
+      .run("1")
+    database.exec("DROP TABLE old_prerendered_html")
+    const columns = database
+      .prepare("PRAGMA table_info(height_measurements)")
+      .all() as Array<{ name: string }>
+    const legacy = [
+      "dataset_version",
+      "renderer_version",
+      "layout_version",
+      "content_hash",
+      "source",
+      "settled",
+      "measured_at",
+    ].every((name) => columns.some((column) => column.name === name))
+    if (legacy) {
+      database.exec(
+        "ALTER TABLE height_measurements RENAME TO old_height_measurements; DROP INDEX IF EXISTS heights_current_lookup"
+      )
+      migrateHeightMeasurements(database)
+      database
+        .prepare(
+          `INSERT INTO height_measurements
+        (message_id, width_bucket, content_hash, cache_revision, px, measured_at, source, settled)
+        SELECT message_id, width_bucket, content_hash, ?, px, measured_at, source, settled
+        FROM old_height_measurements WHERE dataset_version = 'v3' AND renderer_version = 'v2' AND layout_version = 'v4'`
+        )
+        .run("1")
+      database.exec("DROP TABLE old_height_measurements")
+    }
+    const previous = database
+      .prepare("SELECT value FROM bench_metadata WHERE key = 'dataset_version'")
+      .get() as { value: string } | undefined
+    if (previous?.value === "v3") {
+      database
+        .prepare(
+          "INSERT OR REPLACE INTO bench_metadata (key, value) VALUES ('cache_revision', ?)"
+        )
+        .run("1")
+    }
+    database.exec("DELETE FROM bench_metadata WHERE key = 'dataset_version'")
+  })()
 }

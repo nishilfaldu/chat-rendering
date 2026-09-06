@@ -1,8 +1,6 @@
 import puppeteer from "puppeteer-core"
 import {
-  DATASET_VERSION,
-  LAYOUT_VERSION,
-  RENDERER_VERSION,
+  CACHE_REVISION,
   WIDTH_BUCKETS,
   type HeightMeasurement,
 } from "./types.ts"
@@ -78,9 +76,7 @@ export async function measureHeights(options?: {
             messageId: row.messageId,
             widthBucket: bucket,
             contentHash: row.contentHash,
-            datasetVersion: DATASET_VERSION,
-            rendererVersion: RENDERER_VERSION,
-            layoutVersion: LAYOUT_VERSION,
+            cacheRevision: CACHE_REVISION,
             px: row.px,
             measuredAt: Date.now(),
             source: "headless" as const,

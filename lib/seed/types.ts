@@ -1,9 +1,8 @@
 export const SESSION_ID = "session-bench-001"
 export const SEED = 20260315
 export const MESSAGE_COUNT = 10_000
-export const DATASET_VERSION = "v3"
-export const RENDERER_VERSION = "v2"
-export const LAYOUT_VERSION = "v4"
+// Bump when fonts, message layout, or generated content change.
+export const CACHE_REVISION = "1"
 export const WIDTH_BUCKET_STEP = 32
 export const MIN_WIDTH_BUCKET = 320
 export const MAX_WIDTH_BUCKET = 928
@@ -49,9 +48,7 @@ export type HeightMeasurement = {
   messageId: string
   widthBucket: WidthBucket
   contentHash: number
-  datasetVersion: string
-  rendererVersion: string
-  layoutVersion: string
+  cacheRevision: string
   px: number
   measuredAt: number
   source: "headless" | "client"

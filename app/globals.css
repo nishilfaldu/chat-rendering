@@ -227,6 +227,20 @@ body {
   font-weight: 500;
   letter-spacing: -0.8px;
 }
+.bench-docs-link {
+  color: #a3a3a3;
+  font-size: 14px;
+  white-space: nowrap;
+  text-underline-offset: 4px;
+}
+.bench-docs-link:hover {
+  color: #ededed;
+  text-decoration: underline;
+}
+.bench-docs-link:focus-visible {
+  outline: 2px solid #ededed;
+  outline-offset: 5px;
+}
 .bench-header p {
   margin-top: 12px;
   color: #969696;
