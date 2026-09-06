@@ -1,5 +1,7 @@
 import type { ChatAppId } from "@/lib/chat-implementations"
 
+import { trackReadingPosition } from "./position-probe"
+
 import type { Scenario } from "./scenarios"
 import {
   delay,
@@ -37,39 +39,56 @@ export async function runExperiment({
 }): Promise<RunResult[]> {
   const results: RunResult[] = []
   const finishers: ReturnType<typeof track>[] = []
+  const positionFinishers: ReturnType<typeof trackReadingPosition>[] = []
   try {
     if (scenario === "reopen") {
       const started = performance.now()
       const documents = frames.map((frame) => frame.contentDocument)
       setReadings([initialReading, initialReading])
       setRevision((value) => value + 1)
+      const appeared = new Map<number, Document>()
       const pending = new Set(frames.map((_, index) => index))
       while (
         pending.size &&
         performance.now() - started < 30_000 &&
         !cancelled.current
       ) {
-        await delay(50)
+        await nextFrame()
         for (const index of pending) {
           const frame = refs[index]?.current
           const snapshot = frame?.contentWindow?.__RAILGUN_BENCH__?.snapshot
+          const scroll = scrollOf(frame ?? null)
+          const visible = scroll ? firstVisible(scroll) : null
           if (
             frame &&
             frame.contentDocument !== documents[index] &&
             snapshot?.messageCount &&
-            snapshot.firstPaintMs !== null
+            snapshot.firstPaintMs !== null &&
+            visible?.querySelector("[data-message-body]") &&
+            !visible.querySelector("[data-content-pending]")
           ) {
-            results.push({
+            // Observe content across two frames to allow a paint between checks.
+            if (appeared.get(index) !== frame.contentDocument) {
+              appeared.set(index, frame.contentDocument!)
+              continue
+            }
+            results[index] = {
               mode: modes[index]!,
-              mounted: scrollOf(frame)?.querySelectorAll("*").length ?? null,
+              mounted:
+                scrollOf(frame)?.querySelectorAll("[data-message-id]").length ??
+                null,
               corrections: snapshot.correctionCount,
               correctedPx: snapshot.correctedPx,
               elapsed: performance.now() - started,
               frameP95: null,
+              longestFrame: null,
+              peakDrift: null,
               drift: null,
               landing: null,
-            })
+            }
             pending.delete(index)
+          } else {
+            appeared.delete(index)
           }
         }
       }
@@ -141,7 +160,11 @@ export async function runExperiment({
           }
           const origin = offset()
           let drift: number | null = origin === null ? null : 0
-          for (let i = 0; i < 24 && !cancelled.current; i++) {
+          const observationStart = performance.now()
+          while (
+            performance.now() - observationStart < 400 &&
+            !cancelled.current
+          ) {
             await nextFrame()
             const position = offset()
             if (position !== null && origin !== null)
@@ -156,48 +179,38 @@ export async function runExperiment({
       )
       setMarked(scenario === "jump")
     } else if (scenario === "stream") {
+      frames.forEach((frame) =>
+        positionFinishers.push(trackReadingPosition(scrollOf(frame)!, true))
+      )
       await Promise.all(
-        frames.map((frame) =>
-          frame.contentWindow!.__RAILGUN_BENCH__!.commands.streamLast()
+        frames.map((frame, pane) =>
+          frame
+            .contentWindow!.__RAILGUN_BENCH__!.commands.streamLast()
+            .then(() => {
+              const result = finishers[pane]!()
+              result.drift = positionFinishers[pane]!().peak
+              results[pane] = result
+            })
         )
       )
     } else if (scenario === "resize") {
-      const anchors = frames.map((frame) => {
-        const scroll = scrollOf(frame)!
-        const row = firstVisible(scroll)
-        return {
-          id: row?.dataset.messageId,
-          top: row
-            ? row.getBoundingClientRect().top -
-              scroll.getBoundingClientRect().top
-            : null,
-        }
-      })
+      frames.forEach((frame) =>
+        positionFinishers.push(trackReadingPosition(scrollOf(frame)!))
+      )
       setNarrow((value) => !value)
       await delay(900)
-      frames.forEach((frame, pane) => {
-        const scroll = scrollOf(frame)!
-        const anchor = anchors[pane]!
-        const row = anchor.id
-          ? scroll.querySelector<HTMLElement>(
-              `[data-message-id="${anchor.id}"]`
-            )
-          : null
+      frames.forEach((_frame, pane) => {
+        const position = positionFinishers[pane]!()
         const result = finishers[pane]!()
-        result.drift =
-          row && anchor.top !== null
-            ? Math.abs(
-                row.getBoundingClientRect().top -
-                  scroll.getBoundingClientRect().top -
-                  anchor.top
-              )
-            : null
+        result.drift = position.shift
+        result.peakDrift = position.peak
         results[pane] = result
       })
     }
     if (!results.length) finishers.forEach((finish) => results.push(finish()))
     return results
   } finally {
+    positionFinishers.forEach((finish) => finish())
     finishers.forEach((finish) => finish())
   }
 }

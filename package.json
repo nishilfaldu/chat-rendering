@@ -19,7 +19,8 @@
     "test:ui": "tsx lib/benchmark/ui-check.ts",
     "test:resize": "tsx lib/benchmark/resize-check.ts",
     "test:streaming": "tsx lib/benchmark/streaming-check.ts",
-    "test:scroll-lifecycle": "tsx lib/benchmark/scroll-lifecycle-check.ts"
+    "test:scroll-lifecycle": "tsx lib/benchmark/scroll-lifecycle-check.ts",
+    "test:positions": "tsx lib/benchmark/position-probe-check.ts"
   },
   "dependencies": {
     "@shikijs/stream": "^4.4.3",

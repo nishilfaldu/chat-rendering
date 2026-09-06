@@ -20,10 +20,17 @@ try {
     () => !document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
   )
   await page.click(".bench-run")
-  await page.waitForFunction(() =>
-    document
-      .querySelector('[role="status"]')
-      ?.textContent?.startsWith("Finished")
+  await page.waitForFunction(
+    () => document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
+  )
+  await page.waitForFunction(
+    () =>
+      Boolean(
+        document.querySelector(
+          ".bench-primary-reading, .bench-comparison-readings"
+        )
+      ) && !document.querySelector(".bench-measuring"),
+    { timeout: 45_000 }
   )
   console.log(
     await page.evaluate(() => ({

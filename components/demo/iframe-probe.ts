@@ -11,6 +11,8 @@ export type RunResult = {
   mode: ChatAppId
   elapsed: number
   frameP95: number | null
+  longestFrame: number | null
+  peakDrift: number | null
   drift: number | null
   landing: number | null
   mounted: number | null
@@ -51,7 +53,9 @@ export function firstVisible(scroll: HTMLElement) {
   const top = scroll.getBoundingClientRect().top
   return (
     [...scroll.querySelectorAll<HTMLElement>("[data-message-id]")].find(
-      (row) => row.getBoundingClientRect().bottom > top + 1
+      (row) =>
+        row.getBoundingClientRect().bottom > top + 1 &&
+        row.getBoundingClientRect().top < scroll.getBoundingClientRect().bottom
     ) ?? null
   )
 }
@@ -75,7 +79,7 @@ export function track(frame: HTMLIFrameElement, mode: ChatAppId) {
     times.sort((a, b) => a - b)
     return {
       mode,
-      mounted: scroll.querySelectorAll("*").length,
+      mounted: scroll.querySelectorAll("[data-message-id]").length,
       corrections:
         win.__RAILGUN_BENCH__!.snapshot.correctionCount -
         initial.correctionCount,
@@ -85,6 +89,8 @@ export function track(frame: HTMLIFrameElement, mode: ChatAppId) {
       frameP95: times.length
         ? times[Math.ceil(times.length * 0.95) - 1]!
         : null,
+      longestFrame: times.at(-1) ?? null,
+      peakDrift: null,
       drift: null,
       landing: null,
     } as RunResult

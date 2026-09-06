@@ -6,7 +6,7 @@ import {
   conversationPath,
   type ChatAppId,
 } from "@/lib/chat-implementations"
-import { ArrowDown, ArrowUpRight, Check, Play, Square } from "lucide-react"
+import { ArrowDown, ArrowUpRight, Play, Square } from "lucide-react"
 
 import { ImplementationPicker } from "./implementation-picker"
 import {
@@ -16,6 +16,7 @@ import {
   type Reading,
 } from "./iframe-probe"
 import { runExperiment, type CurrentRun } from "./run-experiment"
+import { ReadingTip } from "./reading-tip"
 import { ComparisonReadings, SingleRunReadings } from "./run-readings"
 import { SCENARIOS, type Scenario } from "./scenarios"
 
@@ -37,9 +38,7 @@ export function ChatRenderingDemo() {
   const [revision, setRevision] = useState(0)
   const [narrow, setNarrow] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState(
-    "Choose an experiment, or scroll through the conversation yourself."
-  )
+  const [runError, setRunError] = useState<string | null>(null)
   const [currentRun, setCurrentRun] = useState<CurrentRun | null>(null)
   const [marked, setMarked] = useState(false)
   const [openPicker, setOpenPicker] = useState<0 | 1 | null>(null)
@@ -98,6 +97,7 @@ export function ChatRenderingDemo() {
       previous.map((value, i) => (i === index ? initialReading : value))
     )
     setCurrentRun(null)
+    setRunError(null)
     setMarked(false)
     setOpenPicker(null)
   }
@@ -113,8 +113,8 @@ export function ChatRenderingDemo() {
     cancelled.current = false
     setBusy(true)
     setCurrentRun(null)
+    setRunError(null)
     setMarked(false)
-    setStatus(`Running: ${selected.label.toLowerCase()}…`)
     try {
       const results = await runExperiment({
         scenario,
@@ -129,14 +129,13 @@ export function ChatRenderingDemo() {
       })
       if (!cancelled.current) {
         setCurrentRun({ scenario, results })
-        setStatus("Finished.")
       } else {
-        setStatus(
+        setRunError(
           "Stopped. Run the experiment again for a complete measurement."
         )
       }
     } catch (error) {
-      setStatus(
+      setRunError(
         error instanceof Error
           ? error.message
           : "The experiment could not finish. Reopen the surface and try again."
@@ -197,6 +196,7 @@ export function ChatRenderingDemo() {
                 onChange={(event) => {
                   setCompare(event.target.checked)
                   setCurrentRun(null)
+                  setRunError(null)
                   setOpenPicker(null)
                 }}
               />
@@ -213,6 +213,7 @@ export function ChatRenderingDemo() {
                   onClick={() => {
                     setScenario(item.id)
                     setCurrentRun(null)
+                    setRunError(null)
                     setMarked(false)
                     setOpenPicker(null)
                   }}
@@ -275,19 +276,19 @@ export function ChatRenderingDemo() {
                     ) : null}
                   </div>
                   <div className="bench-surface-footer">
-                    <span>
+                    <ReadingTip tip="Messages in this conversation.">
                       {formatReading(
                         readings[index]?.snapshot?.messageCount,
                         " messages",
                         0
                       )}
-                    </span>
-                    <span>
+                    </ReadingTip>
+                    <ReadingTip tip="Message rows currently in the DOM.">
                       {formatReading(readings[index]?.mounted, " mounted", 0)}
-                    </span>
-                    <span>
+                    </ReadingTip>
+                    <ReadingTip tip="Width of the conversation pane.">
                       {formatReading(readings[index]?.width, " px", 0)}
-                    </span>
+                    </ReadingTip>
                     <button
                       disabled={busy || !ready}
                       aria-label={`Jump to latest in conversation ${index + 1}`}
@@ -307,43 +308,20 @@ export function ChatRenderingDemo() {
               ))}
             </div>
             <aside className="bench-inspector">
-              <div className="bench-inspector-heading">
-                <h2>Current run</h2>
-                <span
-                  className={`bench-status-dot ${busy ? "is-running" : ""}`}
-                />
-                <span>
-                  {busy
-                    ? "Running"
-                    : currentRun
-                      ? "Finished"
-                      : ready
-                        ? "Ready"
-                        : "Loading"}
-                </span>
-              </div>
               <div className="bench-result">
-                {currentRun && compare ? (
+                {busy ? (
+                  <p className="bench-measuring">Measuring…</p>
+                ) : runError ? (
+                  <p>{runError}</p>
+                ) : currentRun && compare ? (
                   <ComparisonReadings run={currentRun} />
                 ) : currentRun ? (
                   <SingleRunReadings run={currentRun} />
                 ) : (
-                  <p>
-                    {busy
-                      ? "Measuring…"
-                      : "Run an experiment to see its measurements."}
-                  </p>
+                  <p>Run an experiment to see its measurements.</p>
                 )}
               </div>
             </aside>
-          </div>
-          <div className="bench-status" role="status">
-            {currentRun ? (
-              <Check size={13} />
-            ) : (
-              <span className="bench-small-dot" />
-            )}
-            {status}
           </div>
         </section>
       </div>

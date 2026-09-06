@@ -35,14 +35,31 @@ try {
     0
   )
   await page.click(".bench-run")
-  await page.waitForFunction(() =>
-    document
-      .querySelector('[role="status"]')
-      ?.textContent?.startsWith("Finished")
+  await page.waitForFunction(
+    () => document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
+  )
+  await page.waitForFunction(
+    () =>
+      Boolean(
+        document.querySelector(
+          ".bench-primary-reading, .bench-comparison-readings"
+        )
+      ) && !document.querySelector(".bench-measuring"),
+    { timeout: 45_000 }
   )
   console.log(
     "scroll:",
     await page.$eval(".bench-result", (e) => e.textContent)
+  )
+  assert.equal(
+    await page.$eval(".bench-primary-reading dt", (node) => node.textContent),
+    "Frame interval p95"
+  )
+  assert.equal(
+    await page.$eval(".bench-rendering-details", (node) =>
+      node.hasAttribute("open")
+    ),
+    true
   )
   await mkdir("/tmp/chat-rendering-checks", { recursive: true })
   await page.screenshot({
@@ -59,12 +76,56 @@ try {
     )
     await page.click(".bench-run")
     await page.waitForFunction(
-      () =>
-        document
-          .querySelector('[role="status"]')
-          ?.textContent?.startsWith("Finished"),
-      { timeout: 45000 }
+      () => document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
     )
+    if (label === "Stream") {
+      await new Promise((resolve) => setTimeout(resolve, 120))
+      const bounds = await (await page.$(
+        ".bench-chat-wrap iframe"
+      ))!.boundingBox()
+      await page.mouse.move(
+        bounds!.x + bounds!.width / 2,
+        bounds!.y + bounds!.height / 2
+      )
+      await page.mouse.wheel({ deltaY: -350 })
+    }
+    await page.waitForFunction(
+      () =>
+        Boolean(
+          document.querySelector(
+            ".bench-primary-reading, .bench-comparison-readings"
+          )
+        ) && !document.querySelector(".bench-measuring"),
+      { timeout: 45_000 }
+    )
+    const expected = {
+      Jump: "Jump time",
+      Latest: "Jump time",
+      Stream: "Frame interval p95",
+      Resize: "Position shift after resize",
+      Reopen: "Time to appear",
+    }[label]
+    assert.equal(
+      await page.$eval(".bench-primary-reading dt", (node) => node.textContent),
+      expected
+    )
+    if (label === "Stream") {
+      const drift = await page.$$eval(
+        ".bench-result dl > div",
+        (rows) =>
+          rows
+            .find(
+              (row) =>
+                row.querySelector("dt")?.textContent ===
+                "Reading-position drift"
+            )
+            ?.querySelector("dd")?.textContent
+      )
+      assert.ok(
+        drift?.includes("px"),
+        "pausing in the history during streaming should produce a reading-position measurement"
+      )
+    }
     console.log(label, await page.$eval(".bench-result", (e) => e.textContent))
   }
   await page.click(".bench-compare input")
@@ -79,14 +140,21 @@ try {
       .click()
   )
   await page.click(".bench-run")
-  await page.waitForFunction(() =>
-    document
-      .querySelector('[role="status"]')
-      ?.textContent?.startsWith("Finished")
+  await page.waitForFunction(
+    () => document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
+  )
+  await page.waitForFunction(
+    () =>
+      Boolean(
+        document.querySelector(
+          ".bench-primary-reading, .bench-comparison-readings"
+        )
+      ) && !document.querySelector(".bench-measuring"),
+    { timeout: 45_000 }
   )
   assert.equal(
     await page.$$eval(
-      ".bench-comparison-readings thead th",
+      ".bench-result > .bench-comparison-readings thead th",
       (columns) => columns.length
     ),
     2
