@@ -1,9 +1,12 @@
 import {
-  IMPLEMENTATION_GROUPS,
+  PICKER_IDS,
   IMPLEMENTATIONS,
+  implementationTip,
   type ChatAppId,
 } from "@/lib/chat-implementations"
 import { ChevronDown } from "lucide-react"
+
+import { ReadingTip } from "./reading-tip"
 
 export function ImplementationPicker({
   value,
@@ -35,38 +38,30 @@ export function ImplementationPicker({
         <span className="bench-picker-value">{selected.label}</span>
         <ChevronDown size={12} aria-hidden="true" />
       </button>
-      <div className="bench-picker-menu" role="listbox" aria-label="Height source">
-        {IMPLEMENTATION_GROUPS.map((group) => (
-          <div
-            key={group.id}
-            className="bench-picker-group"
-            role="group"
-            aria-label={group.label}
-          >
-            <p className="bench-picker-group-label">{group.label}</p>
-            {group.ids.map((id) => {
-              const item = IMPLEMENTATIONS[id]
-              const isSelected = id === value
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  disabled={disabled}
-                  onClick={() => onChange(id)}
-                >
-                  <span className="bench-picker-item-label">{item.label}</span>
-                  {isSelected ? (
-                    <span className="bench-picker-item-desc">
-                      {item.description}
-                    </span>
-                  ) : null}
-                </button>
-              )
-            })}
-          </div>
-        ))}
+      <div className="bench-picker-menu" role="listbox" aria-label="Method">
+        {PICKER_IDS.map((id) => {
+          const item = IMPLEMENTATIONS[id]
+          const isSelected = id === value
+          const tip = implementationTip(id)
+          return (
+            <button
+              key={id}
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              disabled={disabled}
+              onClick={() => onChange(id)}
+            >
+              <span className="bench-picker-item-label">
+                {tip ? (
+                  <ReadingTip tip={tip}>{item.label}</ReadingTip>
+                ) : (
+                  item.label
+                )}
+              </span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

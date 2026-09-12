@@ -1,8 +1,7 @@
 "use client"
 
 import { IMPLEMENTATIONS } from "@/lib/chat-implementations"
-import { extraPayloadKbGz, PRODUCTION_EMBED_GZ_KB } from "@/lib/payload-costs"
-import { WIDTH_BUCKETS } from "@/lib/seed/types"
+import { PRODUCTION_EMBED_GZ_KB } from "@/lib/payload-costs"
 
 import { formatReading, type RunResult } from "./iframe-probe"
 import { ReadingTip } from "./reading-tip"
@@ -11,7 +10,7 @@ import type { Scenario } from "./scenarios"
 
 type ReadingField = {
   label: string
-  tip: string
+  tip?: string
   value: (result: RunResult) => number | null
   unit: string
   digits?: number
@@ -19,14 +18,13 @@ type ReadingField = {
 
 const layoutFixed: ReadingField = {
   label: "Layout fixed after mount",
-  tip: "Sum of absolute height adjustments after rows mounted, in pixels. Separate from how far the reading position moved.",
+  tip: "Pixels corrected after rows mounted.",
   value: (result) => result.correctedPx,
   unit: "px",
 }
 
 const rowsRemeasured: ReadingField = {
   label: "Rows re-measured",
-  tip: "Count of those adjustments when a measured height differs from the estimate or saved height.",
   value: (result) => result.corrections,
   unit: "",
   digits: 0,
@@ -34,14 +32,13 @@ const rowsRemeasured: ReadingField = {
 
 const frameInterval: ReadingField = {
   label: "Frame interval p95",
-  tip: "95th percentile gap between animation frames. These are requestAnimationFrame intervals.",
+  tip: "95th percentile requestAnimationFrame gap.",
   value: (result) => result.frameP95,
   unit: "ms",
 }
 
 const longestFrame: ReadingField = {
   label: "Longest frame gap",
-  tip: "Largest requestAnimationFrame gap in this run. p95 can hide one long gap.",
   value: (result) => result.longestFrame,
   unit: "ms",
 }
@@ -52,14 +49,13 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Time to appear",
-          tip: "Time from reopen until message content is visible across two frames. Includes load and mount.",
+          tip: "Until message content is visible.",
           value: (result) => result.elapsed,
           unit: "ms",
           digits: 0,
         },
         {
           label: "Mounted messages",
-          tip: "Message rows present in the conversation DOM at the end of this run, including rows just outside the viewport.",
           value: (result) => result.mounted,
           unit: "",
           digits: 0,
@@ -69,20 +65,19 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Jump time",
-          tip: "Time to finish the jump, including fetches, alignment, and two frames after. Not first paint.",
           value: (result) => result.elapsed,
           unit: "ms",
           digits: 0,
         },
         {
           label: "Position drift",
-          tip: "Largest sampled movement of the target during the 400 ms after the jump finishes. Zero means it stayed put during that window.",
+          tip: "Movement of the target after the jump.",
           value: (result) => result.drift,
           unit: "px",
         },
         {
           label: "Landing offset",
-          tip: "Distance from the intended top edge after Jump. Zero means the target landed on that edge.",
+          tip: "Distance from the intended top edge.",
           value: (result) => result.landing,
           unit: "px",
         },
@@ -95,7 +90,7 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
         longestFrame,
         {
           label: "Reading-position drift",
-          tip: "Largest sampled movement of the same message while paused in history during streaming. Scroll and follow-latest are excluded. A dash means no stationary position was measured.",
+          tip: "Movement of a paused message while the last reply grows.",
           value: (result) => result.drift,
           unit: "px",
         },
@@ -104,13 +99,13 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Position shift after resize",
-          tip: "Distance the original top-visible message moved after the 900 ms resize observation. Zero means it ended where it started. A dash means the message could not be tracked or you scrolled during the run.",
+          tip: "How far the top-visible message moved.",
           value: (result) => result.drift,
           unit: "px",
         },
         {
           label: "Maximum sampled movement",
-          tip: "Largest sampled movement of that message during the resize, including movement that later corrected itself. Zero means no movement was observed. A dash means tracking was interrupted.",
+          tip: "Peak movement during the resize.",
           value: (result) => result.peakDrift,
           unit: "px",
         },
@@ -123,18 +118,9 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
 }
 
 const payload: ReadingField = {
-  label: "Payload (gz)",
-  tip: "Gzipped embed HTML from the production build.",
+  label: "Payload, gzipped KB",
   value: (result) => PRODUCTION_EMBED_GZ_KB[result.mode],
-  unit: "KB",
-  digits: 0,
-}
-
-const extraPayload: ReadingField = {
-  label: "Extra payload (gz)",
-  tip: "Gzipped embed HTML minus the baseline pane.",
-  value: (result) => extraPayloadKbGz(result.mode) ?? 0,
-  unit: "KB",
+  unit: "",
   digits: 0,
 }
 
@@ -144,7 +130,6 @@ function headlineFields(scenario: Scenario): ReadingField[] {
     rowsRemeasured,
     ...scenarioReadingFields(scenario),
     payload,
-    extraPayload,
   ]
 }
 
@@ -164,45 +149,12 @@ function FrameReference({ scenario }: { scenario: Scenario }) {
   ) : null
 }
 
-function pxOf(result: RunResult | undefined) {
-  return formatReading(result?.correctedPx ?? 0, "", 1)
-}
-
-function rowsOf(result: RunResult | undefined) {
-  return formatReading(result?.corrections ?? 0, "", 0)
-}
-
-export function runInterpretation(run: CurrentRun): string {
-  const left = run.results[0]
-  const right = run.results[1]
-  if (!left) return ""
-
-  if (run.scenario === "jump" && right) {
-    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing. Next visit it will do that again. Right pane fixed ${pxOf(right)} px.`
-  }
-
-  if (run.scenario === "reopen" && right) {
-    const leftMs = left.elapsed == null ? "-" : `${Math.round(left.elapsed)} ms`
-    const rightMs =
-      right.elapsed == null ? "-" : `${Math.round(right.elapsed)} ms`
-    return `Left pane appeared in ${leftMs}. Right pane appeared in ${rightMs}. Server heights can appear later because heights for all ${WIDTH_BUCKETS.length} widths arrive with the page.`
-  }
-
-  if (run.scenario === "scroll") {
-    const idb = run.results.some((result) => result.mode === "saved-in-browser")
-    const cold = idb
-      ? " On a cold IndexedDB cache, writes run during the scroll."
-      : ""
-    if (right) {
-      return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows. Right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.${cold}`
-    }
-    return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.${cold}`
-  }
-
-  if (right) {
-    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount. Right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.`
-  }
-  return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.`
+function ReadingLabel({ field }: { field: ReadingField }) {
+  return field.tip ? (
+    <ReadingTip tip={field.tip}>{field.label}</ReadingTip>
+  ) : (
+    field.label
+  )
 }
 
 function ReadingTable({
@@ -230,7 +182,7 @@ function ReadingTable({
         {fields.map((field) => (
           <tr key={field.label}>
             <th scope="row">
-              <ReadingTip tip={field.tip}>{field.label}</ReadingTip>
+              <ReadingLabel field={field} />
             </th>
             {run.results.map((result, index) => (
               <td key={index}>{value(field, result)}</td>
@@ -245,7 +197,6 @@ function ReadingTable({
 export function ComparisonReadings({ run }: { run: CurrentRun }) {
   return (
     <>
-      <p className="bench-interpretation">{runInterpretation(run)}</p>
       <ReadingTable
         run={run}
         fields={headlineFields(run.scenario)}
@@ -259,7 +210,6 @@ export function ComparisonReadings({ run }: { run: CurrentRun }) {
 export function SingleRunReadings({ run }: { run: CurrentRun }) {
   return (
     <>
-      <p className="bench-interpretation">{runInterpretation(run)}</p>
       <ReadingTable
         run={run}
         fields={headlineFields(run.scenario)}

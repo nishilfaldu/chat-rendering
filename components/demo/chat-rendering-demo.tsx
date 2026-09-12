@@ -17,7 +17,6 @@ import {
   type Reading,
 } from "./iframe-probe"
 import { runExperiment, type CurrentRun } from "./run-experiment"
-import { ReadingTip } from "./reading-tip"
 import { ComparisonReadings, SingleRunReadings } from "./run-readings"
 import { SCENARIOS, type Scenario } from "./scenarios"
 
@@ -270,19 +269,19 @@ export function ChatRenderingDemo() {
                     ) : null}
                   </div>
                   <div className="bench-surface-footer">
-                    <ReadingTip tip="Messages in this conversation.">
+                    <span>
                       {formatReading(
                         readings[index]?.snapshot?.messageCount,
                         " messages",
                         0
                       )}
-                    </ReadingTip>
-                    <ReadingTip tip="Message rows currently in the DOM.">
+                    </span>
+                    <span>
                       {formatReading(readings[index]?.mounted, " mounted", 0)}
-                    </ReadingTip>
-                    <ReadingTip tip="Width of the conversation pane.">
+                    </span>
+                    <span>
                       {formatReading(readings[index]?.width, " px", 0)}
-                    </ReadingTip>
+                    </span>
                     <button
                       disabled={busy || !ready}
                       aria-label={`Jump to latest in conversation ${index + 1}`}

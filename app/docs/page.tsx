@@ -6,7 +6,7 @@ import styles from "./docs.module.css"
 export const metadata: Metadata = {
   title: "Notes · Chat rendering",
   description:
-    "Where each height comes from and what it costs. IndexedDB, the server, and prerendered HTML.",
+    "Height and cost for TanStack Virtual, Browser cache (IndexedDB), Precomputed (fetched from server), and Precomputed + baked HTML.",
 }
 
 export default function DocsPage() {
@@ -20,20 +20,16 @@ export default function DocsPage() {
         <article className={styles.article}>
           <h1>Notes</h1>
 
-          <h2>TanStack Virtual, measured after mount</h2>
+          <h2>TanStack Virtual</h2>
           <ul>
             <li>
-              Height comes from <code>estimateSize</code> returning 80, then{" "}
-              <code>measureElement</code> after the row mounts. The spacer is
-              corrected in place.
+              Height is 80 px until the row mounts. Then it is measured and
+              corrected.
             </li>
-            <li>
-              Cost is the same work on every visit. Rows re-measure. Pixels get
-              fixed after mount.
-            </li>
+            <li>Cost is that work on every visit.</li>
           </ul>
 
-          <h2>Heights this browser already measured (IndexedDB)</h2>
+          <h2>Browser cache (IndexedDB)</h2>
           <ul>
             <li>
               Height comes from IndexedDB. This browser stores measured heights
@@ -45,7 +41,7 @@ export default function DocsPage() {
             </li>
           </ul>
 
-          <h2>Heights measured on the server</h2>
+          <h2>Precomputed (fetched from server)</h2>
           <ul>
             <li>
               Height comes from measurements on the server. They ship with the
@@ -54,15 +50,13 @@ export default function DocsPage() {
               browser. A live app would collect those heights from visits.
             </li>
             <li>
-              Cost is +819 KB gzipped versus the baseline embed. That is 200,000
-              precomputed heights. Time to first content can be later than the
-              baseline because heights for all 20 widths arrive with the page.
-              Shipping one width and fetching the rest on resize is untested
-              here.
+              Cost is 1,077 KB gzipped. Heights for all 20 widths arrive with
+              the page. Shipping one width and fetching the rest on resize is
+              untested here.
             </li>
           </ul>
 
-          <h2>Heights + rendered HTML from the server</h2>
+          <h2>Precomputed + baked HTML</h2>
           <ul>
             <li>
               Height comes from the same server measurements, plus prerendered
@@ -70,10 +64,7 @@ export default function DocsPage() {
               Jump fetches HTML for that range. Placeholders keep row geometry
               until bodies arrive.
             </li>
-            <li>
-              Cost is +660 KB gzipped versus the baseline embed, plus fetch
-              latency on Jump.
-            </li>
+            <li>Cost is 918 KB gzipped, plus fetch latency on Jump.</li>
           </ul>
         </article>
       </div>

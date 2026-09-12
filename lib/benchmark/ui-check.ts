@@ -19,6 +19,36 @@ async function firstReadingLabel(page: Page) {
   })
 }
 
+async function collectReadingTips(page: Page) {
+  const rows = await page.$$(".bench-comparison-readings tbody th")
+  const tips: Record<string, string | null> = {}
+  for (const row of rows) {
+    const label = await row.evaluate((node) => node.textContent ?? "")
+    const tip = await row.$(".bench-tip")
+    if (!tip) {
+      tips[label] = null
+      continue
+    }
+    await tip.hover()
+    await page.waitForSelector(".bench-tip-bubble")
+    tips[label] = await page.$eval(
+      ".bench-tip-bubble",
+      (node) => node.textContent ?? ""
+    )
+    await page.mouse.move(0, 0)
+    await page.waitForSelector(".bench-tip-bubble", { hidden: true })
+  }
+  return tips
+}
+
+const TAB_LINES: Record<string, string> = {
+  Jump: "Jump to message 8,000",
+  Reopen: "Open the conversation again",
+  Scroll: "Scroll the full history",
+  Resize: "Device width changes",
+  Stream: "The last reply grows",
+}
+
 try {
   const page = await browser.newPage()
   await page.evaluateOnNewDocument("globalThis.__name = (target) => target")
@@ -51,6 +81,15 @@ try {
   assert.doesNotMatch(homeCopy, /No virtualization/)
   assert.doesNotMatch(homeCopy, /Content-type guess/)
   assert.doesNotMatch(homeCopy, /Every message/)
+  assert.doesNotMatch(homeCopy, /Height sources/)
+  assert.doesNotMatch(homeCopy, /height sources/)
+  assert.doesNotMatch(homeCopy, /\bBaseline\b/)
+  assert.doesNotMatch(homeCopy, /Every pane anchors/)
+  assert.doesNotMatch(homeCopy, /Drift should stay/)
+  assert.equal(
+    await page.$eval(".bench-instruction p", (node) => node.textContent),
+    "Jump to message 8,000"
+  )
   assert.equal(
     await page.$eval(".bench-docs-link", (node) => node.textContent),
     "Notes"
@@ -78,7 +117,7 @@ try {
     await page.$$eval(".bench-picker-value", (nodes) =>
       nodes.map((node) => node.textContent)
     ),
-    ["TanStack Virtual, measured after mount", "Heights measured on the server"]
+    ["TanStack Virtual", "Precomputed (fetched from server)"]
   )
   assert.equal(
     await page.$$eval(
@@ -88,32 +127,30 @@ try {
     0
   )
   await page.click(".bench-picker-trigger")
-  await page.waitForSelector(".bench-picker.is-open .bench-picker-group-label")
-  assert.deepEqual(
-    await page.$$eval(
-      ".bench-picker.is-open .bench-picker-group-label",
-      (nodes) => nodes.map((node) => node.textContent)
-    ),
-    ["Baseline", "Height sources"]
-  )
+  await page.waitForSelector(".bench-picker.is-open .bench-picker-item-label")
+  assert.equal(await page.$(".bench-picker-group-label"), null)
   assert.deepEqual(
     await page.$$eval(
       ".bench-picker.is-open .bench-picker-item-label",
       (nodes) => nodes.map((node) => node.textContent)
     ),
     [
-      "TanStack Virtual, measured after mount",
-      "Heights this browser already measured (IndexedDB)",
-      "Heights measured on the server",
-      "Heights + rendered HTML from the server",
+      "TanStack Virtual",
+      "Browser cache (IndexedDB)",
+      "Precomputed (fetched from server)",
+      "Precomputed + baked HTML",
     ]
   )
-  assert.match(
-    await page.$eval(
-      ".bench-picker.is-open button[aria-selected='true'] .bench-picker-item-desc",
-      (node) => node.textContent ?? ""
-    ),
-    /80 px guess/
+  assert.equal(await page.$(".bench-picker-item-desc"), null)
+  const baked = await page.$(
+    ".bench-picker.is-open .bench-picker-item-label .bench-tip"
+  )
+  assert.ok(baked)
+  await baked.hover()
+  await page.waitForSelector(".bench-tip-bubble")
+  assert.equal(
+    await page.$eval(".bench-tip-bubble", (node) => node.textContent),
+    "Prerendered message HTML."
   )
   await page.click("h1")
 
@@ -132,43 +169,61 @@ try {
   )
   console.log("jump:", await page.$eval(".bench-result", (e) => e.textContent))
   assert.equal(await firstReadingLabel(page), "Layout fixed after mount")
-  assert.match(
-    await page.$eval(".bench-interpretation", (node) => node.textContent ?? ""),
-    /Left pane fixed/
-  )
+  assert.equal(await page.$(".bench-interpretation"), null)
   assert.equal(await page.$(".bench-cost-lines"), null)
+  assert.deepEqual(
+    await page.$$eval(".bench-comparison-readings thead th", (nodes) =>
+      nodes.map((node) => node.textContent)
+    ),
+    ["TanStack Virtual", "Precomputed (fetched from server)"]
+  )
   const payloadRow = await page.$$eval(
     ".bench-comparison-readings tbody tr",
     (rows) => {
       const row = rows.find((candidate) =>
-        (candidate.querySelector("th")?.textContent ?? "").includes(
-          "Payload (gz)"
-        )
+        (candidate.querySelector("th")?.textContent ?? "").includes("Payload")
       )
       return row
-        ? [...row.querySelectorAll("td")].map((cell) => cell.textContent)
+        ? {
+            label: row.querySelector("th")?.textContent,
+            values: [...row.querySelectorAll("td")].map(
+              (cell) => cell.textContent
+            ),
+          }
         : null
     }
   )
-  assert.deepEqual(payloadRow, ["258 KB", "1,077 KB"])
+  assert.deepEqual(payloadRow, {
+    label: "Payload, gzipped KB",
+    values: ["258", "1,077"],
+  })
   const extraRow = await page.$$eval(
     ".bench-comparison-readings tbody tr",
-    (rows) => {
-      const row = rows.find((candidate) =>
+    (rows) =>
+      rows.some((candidate) =>
         (candidate.querySelector("th")?.textContent ?? "").includes(
-          "Extra payload (gz)"
+          "Extra payload"
         )
       )
-      return row
-        ? [...row.querySelectorAll("td")].map((cell) => cell.textContent)
-        : null
-    }
   )
-  assert.deepEqual(extraRow, ["0 KB", "819 KB"])
-  assert.doesNotMatch(
-    await page.$eval(".bench-result", (node) => node.textContent ?? ""),
-    /Cost:/
+  assert.equal(extraRow, false)
+  const resultCopy = await page.$eval(
+    ".bench-result",
+    (node) => node.textContent ?? ""
   )
+  assert.doesNotMatch(resultCopy, /Cost:/)
+  assert.doesNotMatch(resultCopy, /Left pane/)
+  assert.doesNotMatch(resultCopy, /Right pane/)
+  assert.doesNotMatch(resultCopy, /Extra payload/)
+  const jumpTips = await collectReadingTips(page)
+  assert.deepEqual(jumpTips, {
+    "Layout fixed after mount": "Pixels corrected after rows mounted.",
+    "Rows re-measured": null,
+    "Jump time": null,
+    "Position drift": "Movement of the target after the jump.",
+    "Landing offset": "Distance from the intended top edge.",
+    "Payload, gzipped KB": null,
+  })
   await mkdir("/tmp/chat-rendering-checks", { recursive: true })
   await page.screenshot({
     path: "/tmp/chat-rendering-checks/desktop.png",
@@ -182,6 +237,10 @@ try {
           .find((b) => b.textContent === label)!
           .click(),
       label
+    )
+    assert.equal(
+      await page.$eval(".bench-instruction p", (node) => node.textContent),
+      TAB_LINES[label]
     )
     await page.waitForFunction(
       () => !document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
@@ -229,6 +288,10 @@ try {
       )
     }
     console.log(label, await page.$eval(".bench-result", (e) => e.textContent))
+    assert.doesNotMatch(
+      await page.$eval(".bench-result", (node) => node.textContent ?? ""),
+      /Left pane|Right pane/
+    )
   }
 
   assert.equal(
@@ -261,24 +324,35 @@ try {
   await page.waitForSelector("h1")
   assert.equal(await page.$eval("h1", (node) => node.textContent), "Notes")
   const notes = await page.$eval("article", (node) => node.textContent ?? "")
-  assert.match(notes, /TanStack Virtual, measured after mount/)
-  assert.match(notes, /Heights this browser already measured/)
+  assert.deepEqual(
+    await page.$$eval("article h2", (nodes) =>
+      nodes.map((node) => node.textContent)
+    ),
+    [
+      "TanStack Virtual",
+      "Browser cache (IndexedDB)",
+      "Precomputed (fetched from server)",
+      "Precomputed + baked HTML",
+    ]
+  )
   assert.match(notes, /IndexedDB/)
   assert.match(notes, /stores measured heights/)
-  assert.match(notes, /Heights measured on the server/)
   assert.match(notes, /ship with the page/)
   assert.doesNotMatch(notes, /CACHE_REVISION/)
   assert.doesNotMatch(notes, /binary search/i)
   assert.doesNotMatch(notes, /offset tables/)
   assert.doesNotMatch(notes, /fonts or layout/)
-  assert.match(notes, /\+819 KB/)
-  assert.match(notes, /Heights \+ rendered HTML from the server/)
+  assert.doesNotMatch(notes, /Extra payload/)
+  assert.doesNotMatch(notes, /\+819 KB/)
+  assert.doesNotMatch(notes, /Left pane/)
+  assert.doesNotMatch(notes, /Right pane/)
   assert.doesNotMatch(notes, /Reading the numbers/)
   assert.doesNotMatch(notes, /How to read the numbers/)
   assert.doesNotMatch(notes, /What every pane shares/)
   assert.doesNotMatch(notes, /The baseline you already have/)
   assert.doesNotMatch(notes, /Choosing/)
   assert.doesNotMatch(notes, /\bControls\b/)
+  assert.doesNotMatch(notes, /Height sources/)
   assert.equal(await page.$$eval("article ul", (nodes) => nodes.length), 4)
   assert.equal(
     await page.$$eval(

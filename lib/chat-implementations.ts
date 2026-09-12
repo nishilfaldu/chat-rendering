@@ -1,36 +1,26 @@
 export const IMPLEMENTATIONS = {
   "every-message": {
     label: "No virtualization",
-    description: "Mounts all 10,000 messages. Jump does not need an estimate.",
     legacy: ["naive"],
   },
   measured: {
-    label: "TanStack Virtual, measured after mount",
-    description:
-      "80 px guess per unmounted row. Measured after mount. Corrected in place.",
+    label: "TanStack Virtual",
     legacy: ["baseline"],
   },
   estimated: {
     label: "Content-type guess, never corrected",
-    description:
-      "Clips overflow. Zero corrections can still be a wrong height.",
     legacy: ["height-class"],
   },
   "saved-in-browser": {
-    label: "Heights this browser already measured (IndexedDB)",
-    description:
-      "This browser stores measured heights and reuses them on the next visit.",
+    label: "Browser cache (IndexedDB)",
     legacy: ["orbit"],
   },
   "saved-measurements": {
-    label: "Heights measured on the server",
-    description: "Measured heights live on the server and ship with the page.",
+    label: "Precomputed (fetched from server)",
     legacy: ["server-heights"],
   },
   "saved-html": {
-    label: "Heights + rendered HTML from the server",
-    description:
-      "Same server heights plus prerendered HTML. Jump fetches bodies into a 160-entry working set.",
+    label: "Precomputed + baked HTML",
     legacy: ["server-index"],
   },
 } as const
@@ -39,22 +29,20 @@ export type ChatAppId = keyof typeof IMPLEMENTATIONS
 
 export const CHAT_APP_IDS = Object.keys(IMPLEMENTATIONS) as ChatAppId[]
 
-export const IMPLEMENTATION_GROUPS = [
-  {
-    id: "baseline",
-    label: "Baseline",
-    ids: ["measured"],
-  },
-  {
-    id: "height-sources",
-    label: "Height sources",
-    ids: ["saved-in-browser", "saved-measurements", "saved-html"],
-  },
-] as const satisfies ReadonlyArray<{
-  id: string
-  label: string
-  ids: readonly ChatAppId[]
-}>
+export const PICKER_IDS = [
+  "measured",
+  "saved-in-browser",
+  "saved-measurements",
+  "saved-html",
+] as const satisfies readonly ChatAppId[]
+
+const IMPLEMENTATION_TIPS: Partial<Record<ChatAppId, string>> = {
+  "saved-html": "Prerendered message HTML.",
+}
+
+export function implementationTip(id: ChatAppId): string | undefined {
+  return IMPLEMENTATION_TIPS[id]
+}
 
 const LEGACY_TO_ID = Object.fromEntries(
   CHAT_APP_IDS.flatMap((id) =>
