@@ -220,11 +220,10 @@ export default function DocsPage() {
               </p>
               <p>
                 Payload sizes in the cost line come from gzipped production
-                embed HTML, not from a headless review of the dev server. Until
-                those figures are filled from a production build, the cost line
-                names the shape of the bill (tables on the wire, IndexedDB
-                writes, HTML fetch) without quoting a byte count from another
-                machine.
+                embed HTML: the baseline pane is 258 KB; server heights add 819
+                KB for the 20 width tables (1,077 KB total, about 4.2× the
+                baseline); heights plus HTML add 660 KB. Your run still supplies
+                layout-fixed, time, and drift. Those move with the machine.
               </p>
             </section>
 

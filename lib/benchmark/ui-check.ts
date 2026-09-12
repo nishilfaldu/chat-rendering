@@ -116,7 +116,7 @@ try {
   )
   assert.match(
     await page.$eval(".bench-cost-lines", (node) => node.textContent ?? ""),
-    /200,000 precomputed heights/
+    /\+819 KB payload \(gz\).*200,000 precomputed heights/s
   )
   await mkdir("/tmp/chat-rendering-checks", { recursive: true })
   await page.screenshot({

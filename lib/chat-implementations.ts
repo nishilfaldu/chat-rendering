@@ -93,5 +93,8 @@ export function implementationCost(mode: ChatAppId, extraKbGz?: number): string 
   if (mode === "saved-measurements" && extraKbGz !== undefined) {
     return `Cost: +${extraKbGz} KB payload (gz) · 200,000 precomputed heights · client still re-measures and posts corrections`
   }
+  if (mode === "saved-html" && extraKbGz !== undefined) {
+    return `Cost: +${extraKbGz} KB payload (gz) · HTML fetch on jump · 160-entry working set`
+  }
   return IMPLEMENTATIONS[mode].cost
 }
