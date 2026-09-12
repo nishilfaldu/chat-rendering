@@ -242,87 +242,16 @@ body {
   outline-offset: 5px;
 }
 .bench-header p {
-  margin-top: 12px;
-  color: #969696;
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 62ch;
-}
-.bench-subline {
-  margin-top: 10px;
-  color: #7a7a7a;
+  margin-top: 8px;
+  color: #8a8a8a;
   font-size: 13px;
-  line-height: 1.6;
-}
-.bench-subline code,
-.bench-what code {
-  font-family: var(--font-mono), monospace;
-  font-size: 12px;
-  color: #c8c8c8;
-  margin-inline: 0.2em;
-}
-.bench-what {
-  margin: 0 0 28px;
-  padding: 14px 18px;
-  border: 1px solid #242424;
-  border-radius: 8px;
-  background: #101010;
-}
-.bench-what summary {
-  cursor: pointer;
-  color: #d4d4d4;
-  font-size: 13px;
-  font-weight: 500;
-}
-.bench-what p {
-  margin-top: 10px;
-  color: #969696;
-  font-size: 14px;
-  line-height: 1.65;
-  max-width: 72ch;
+  line-height: 1.45;
+  max-width: 52ch;
 }
 .bench-workbench {
   border: 1px solid #242424;
   border-radius: 8px;
   overflow: hidden;
-}
-.bench-then-run {
-  padding: 16px 22px 18px;
-  border-top: 1px solid #242424;
-  background: #101010;
-}
-.bench-then-run > p {
-  margin: 0 0 10px;
-  color: #c4c4c4;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  max-width: none;
-}
-.bench-then-run ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-}
-.bench-then-run button {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 4px 0;
-  text-align: left;
-  cursor: pointer;
-}
-.bench-then-run button span:first-child {
-  color: #ededed;
-  font-size: 13px;
-}
-.bench-then-run button span:last-child {
-  color: #8a8a8a;
-  font-size: 11px;
-  line-height: 1.4;
-}
-.bench-then-run button:hover span:first-child {
-  text-decoration: underline;
 }
 .bench-approach {
   position: relative;
@@ -819,12 +748,8 @@ body {
     font-size: 25px;
   }
   .bench-header p {
-    font-size: 14px;
+    font-size: 13px;
     max-width: none;
-  }
-  .bench-what {
-    padding: 12px 14px;
-    margin-bottom: 22px;
   }
   .bench-approach {
     padding: 14px;
@@ -852,9 +777,6 @@ body {
     width: 100%;
   }
   .bench-instruction {
-    padding: 14px;
-  }
-  .bench-then-run {
     padding: 14px;
   }
   .bench-body,

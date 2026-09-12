@@ -19,7 +19,7 @@ import {
 import { runExperiment, type CurrentRun } from "./run-experiment"
 import { ReadingTip } from "./reading-tip"
 import { ComparisonReadings, SingleRunReadings } from "./run-readings"
-import { SCENARIOS, THEN_RUN, type Scenario } from "./scenarios"
+import { SCENARIOS, type Scenario } from "./scenarios"
 
 export function ChatRenderingDemo() {
   const refs = [
@@ -43,7 +43,6 @@ export function ChatRenderingDemo() {
   const [currentRun, setCurrentRun] = useState<CurrentRun | null>(null)
   const [marked, setMarked] = useState(false)
   const [openPicker, setOpenPicker] = useState<0 | 1 | null>(null)
-  const [whatOpen, setWhatOpen] = useState(true)
   const cancelled = useRef(false)
   const selected = SCENARIOS.find((item) => item.id === scenario)!
   const count = compare ? 2 : 1
@@ -131,7 +130,6 @@ export function ChatRenderingDemo() {
       })
       if (!cancelled.current) {
         setCurrentRun({ scenario, results })
-        setWhatOpen(false)
       } else {
         setRunError("Stopped. Run the bench again for a complete measurement.")
       }
@@ -155,38 +153,12 @@ export function ChatRenderingDemo() {
         <header className="bench-header">
           <div>
             <h1>Chat rendering</h1>
-            <p>
-              TanStack Virtual has no height for a row it has not rendered. It
-              guesses 80 px, mounts the row, measures it, and corrects the
-              spacer. It does this on every visit. This bench keeps{" "}
-              <code>useVirtualizer</code>. Heights can come from IndexedDB, the
-              server, or prerendered HTML. Read Layout fixed after mount, then
-              payload.
-            </p>
-            <p className="bench-subline">
-              10,000 messages. Same <code>@tanstack/react-virtual</code> wrapper
-              in every pane except one control. Numbers come from this run.
-            </p>
+            <p>How to render chat better than just virtualization alone.</p>
           </div>
           <Link className="bench-docs-link" href="/docs">
             Notes
           </Link>
         </header>
-        <details
-          className="bench-what"
-          open={whatOpen}
-          onToggle={(event) => setWhatOpen(event.currentTarget.open)}
-        >
-          <summary>What this is</summary>
-          <p>
-            Every pane runs <code>useVirtualizer</code> except the
-            no-virtualization control. Only <code>estimateSize</code> and{" "}
-            <code>measureElement</code> change. Height before mount is an 80 px
-            guess, a value from IndexedDB, the server, or prerendered HTML.
-            Costs are gzipped payload, IndexedDB writes, server precompute, and
-            stale heights.
-          </p>
-        </details>
         <section className="bench-workbench" aria-label="Chat rendering bench">
           <div className={`bench-approach ${compare ? "is-comparing" : ""}`}>
             <div className="bench-pickers">
@@ -348,29 +320,6 @@ export function ChatRenderingDemo() {
               </div>
             </aside>
           </div>
-          <nav className="bench-then-run" aria-label="Then run">
-            <p>Then run</p>
-            <ul>
-              {THEN_RUN.filter((item) => item.id !== scenario).map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      setScenario(item.id)
-                      setCurrentRun(null)
-                      setRunError(null)
-                      setMarked(false)
-                      setOpenPicker(null)
-                    }}
-                  >
-                    <span>{item.title}</span>
-                    <span>{item.blurb}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
         </section>
       </div>
     </main>

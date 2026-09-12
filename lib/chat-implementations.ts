@@ -50,11 +50,6 @@ export const IMPLEMENTATION_GROUPS = [
     label: "Height sources",
     ids: ["saved-in-browser", "saved-measurements", "saved-html"],
   },
-  {
-    id: "controls",
-    label: "Controls",
-    ids: ["every-message", "estimated"],
-  },
 ] as const satisfies ReadonlyArray<{
   id: string
   label: string

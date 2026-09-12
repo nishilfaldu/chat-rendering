@@ -1,6 +1,6 @@
 # Chat rendering
 
-TanStack Virtual guesses 80 px, mounts the row, and measures it. This bench keeps that virtualizer and swaps the height source. IndexedDB, the server, or prerendered HTML. Open [http://localhost:3000](http://localhost:3000). Notes are at /docs.
+How to render chat better than just virtualization alone. Open [http://localhost:3000](http://localhost:3000). Notes are at /docs.
 
 ```sh
 pnpm install

@@ -32,31 +32,3 @@ export const SCENARIOS = [
 ] as const
 
 export type Scenario = (typeof SCENARIOS)[number]["id"]
-
-export const THEN_RUN = [
-  {
-    id: "reopen" as const,
-    title: "Reopen",
-    blurb: "second visit, including payload",
-  },
-  {
-    id: "scroll" as const,
-    title: "Scroll",
-    blurb: "full pass through history",
-  },
-  {
-    id: "resize" as const,
-    title: "Resize",
-    blurb: "width bucket changes",
-  },
-  {
-    id: "stream" as const,
-    title: "Stream",
-    blurb: "anchoring, not a height source",
-  },
-  {
-    id: "jump" as const,
-    title: "Jump",
-    blurb: "jump to message 8,000",
-  },
-]

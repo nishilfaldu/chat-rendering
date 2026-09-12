@@ -36,10 +36,21 @@ try {
     await page.$eval("h1", (node) => node.textContent),
     "Chat rendering"
   )
-  assert.match(
-    await page.$eval(".bench-header p", (node) => node.textContent ?? ""),
-    /TanStack Virtual/
+  assert.equal(
+    await page.$eval(".bench-header p", (node) => node.textContent),
+    "How to render chat better than just virtualization alone."
   )
+  assert.equal(await page.$(".bench-then-run"), null)
+  assert.equal(await page.$(".bench-what"), null)
+  const homeCopy = await page.$eval(
+    ".bench-page",
+    (node) => node.textContent ?? ""
+  )
+  assert.doesNotMatch(homeCopy, /What this is/)
+  assert.doesNotMatch(homeCopy, /THEN RUN/)
+  assert.doesNotMatch(homeCopy, /No virtualization/)
+  assert.doesNotMatch(homeCopy, /Content-type guess/)
+  assert.doesNotMatch(homeCopy, /Every message/)
   assert.equal(
     await page.$eval(".bench-docs-link", (node) => node.textContent),
     "Notes"
@@ -83,7 +94,19 @@ try {
       ".bench-picker.is-open .bench-picker-group-label",
       (nodes) => nodes.map((node) => node.textContent)
     ),
-    ["Baseline", "Height sources", "Controls"]
+    ["Baseline", "Height sources"]
+  )
+  assert.deepEqual(
+    await page.$$eval(
+      ".bench-picker.is-open .bench-picker-item-label",
+      (nodes) => nodes.map((node) => node.textContent)
+    ),
+    [
+      "TanStack Virtual, measured after mount",
+      "Heights this browser already measured (IndexedDB)",
+      "Heights measured on the server",
+      "Heights + rendered HTML from the server",
+    ]
   )
   assert.match(
     await page.$eval(
