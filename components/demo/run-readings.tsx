@@ -19,14 +19,14 @@ type ReadingField = {
 
 const layoutFixed: ReadingField = {
   label: "Layout fixed after mount",
-  tip: "Sum of the absolute height adjustments after rows mounted, in pixels. This is internal layout work, not the distance your reading position moved.",
+  tip: "Sum of absolute height adjustments after rows mounted, in pixels. Separate from how far the reading position moved.",
   value: (result) => result.correctedPx,
   unit: "px",
 }
 
 const rowsRemeasured: ReadingField = {
   label: "Rows re-measured",
-  tip: "Recorded adjustments when a measured message height differs from its estimate or saved height. Anchoring can keep content still even when corrections occur.",
+  tip: "Count of those adjustments when a measured height differs from the estimate or saved height.",
   value: (result) => result.corrections,
   unit: "",
   digits: 0,
@@ -34,14 +34,14 @@ const rowsRemeasured: ReadingField = {
 
 const frameInterval: ReadingField = {
   label: "Frame interval p95",
-  tip: "95% of measured gaps between animation frames were this short or shorter. Larger gaps can feel like stutter. These are browser callback intervals, not isolated rendering costs.",
+  tip: "95th percentile gap between animation frames. These are requestAnimationFrame intervals.",
   value: (result) => result.frameP95,
   unit: "ms",
 }
 
 const longestFrame: ReadingField = {
   label: "Longest frame gap",
-  tip: "The largest measured gap between animation frames during this run. This can reveal a brief pause that p95 misses. Smaller is better.",
+  tip: "Largest requestAnimationFrame gap in this run. p95 can hide one long gap.",
   value: (result) => result.longestFrame,
   unit: "ms",
 }
@@ -52,7 +52,7 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Time to appear",
-          tip: "Time from reopening until a fresh surface has visible message content across two animation-frame checks. Includes loading and mounting; an approximation of when content appears. Lower is faster.",
+          tip: "Time from reopen until message content is visible across two frames. Includes load and mount.",
           value: (result) => result.elapsed,
           unit: "ms",
           digits: 0,
@@ -69,7 +69,7 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Jump time",
-          tip: "Time to complete the jump, including content fetching where needed, alignment attempts, and two animation frames afterward. Lower is faster; this is not a first-pixel measurement.",
+          tip: "Time to finish the jump, including fetches, alignment, and two frames after. Not first paint.",
           value: (result) => result.elapsed,
           unit: "ms",
           digits: 0,
@@ -82,7 +82,7 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
         },
         {
           label: "Landing offset",
-          tip: "Final distance from the intended viewport edge: the top for Jump. Zero means the target landed exactly.",
+          tip: "Distance from the intended top edge after Jump. Zero means the target landed on that edge.",
           value: (result) => result.landing,
           unit: "px",
         },
@@ -95,7 +95,7 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
         longestFrame,
         {
           label: "Reading-position drift",
-          tip: "Largest sampled movement of the same message while you pause in the history during streaming. Your scrolling and following the latest response are excluded. A dash means no stationary position was measured, or the tracked message disappeared.",
+          tip: "Largest sampled movement of the same message while paused in history during streaming. Scroll and follow-latest are excluded. A dash means no stationary position was measured.",
           value: (result) => result.drift,
           unit: "px",
         },
@@ -171,34 +171,36 @@ export function runInterpretation(run: CurrentRun): string {
   if (!left) return ""
 
   if (run.scenario === "jump" && right) {
-    const tables =
+    const bill =
       right.mode === "saved-measurements" || right.mode === "saved-html"
-        ? `but shipped ${WIDTH_BUCKETS.length} width tables with the page`
-        : `and ${implementationCost(right.mode, extraPayloadKbGz(right.mode)).replace(/^Cost: /, "")}`
-    return `Same landing, different bill: the left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing and will do it again next visit; the right pane fixed ${pxOf(right)} px ${tables}.`
+        ? `It shipped ${WIDTH_BUCKETS.length} width tables with the page.`
+        : implementationCost(right.mode, extraPayloadKbGz(right.mode)).replace(
+            /^Cost: /,
+            ""
+          )
+    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing. Next visit it will do that again. Right pane fixed ${pxOf(right)} px. ${bill}`
   }
 
   if (run.scenario === "reopen" && right) {
-    const leftMs = left.elapsed == null ? "—" : `${Math.round(left.elapsed)} ms`
+    const leftMs = left.elapsed == null ? "-" : `${Math.round(left.elapsed)} ms`
     const rightMs =
-      right.elapsed == null ? "—" : `${Math.round(right.elapsed)} ms`
-    return `The left pane appeared in ${leftMs}; the right pane in ${rightMs}. Server heights can appear later than the baseline on this visit because all ${WIDTH_BUCKETS.length} width tables arrive with the page.`
+      right.elapsed == null ? "-" : `${Math.round(right.elapsed)} ms`
+    return `Left pane appeared in ${leftMs}. Right pane appeared in ${rightMs}. Server heights can appear later because all ${WIDTH_BUCKETS.length} width tables arrive with the page.`
   }
 
   if (run.scenario === "scroll") {
     const idb = run.results.some((result) => result.mode === "saved-in-browser")
-    const cold =
-      idb
-        ? " On a cold IndexedDB cache, those writes compete with scrolling; that cost belongs in the cost line, not off-stage."
-        : ""
+    const cold = idb
+      ? " On a cold IndexedDB cache, writes run during the scroll."
+      : ""
     if (right) {
-      return `The left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows; the right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.${cold}`
+      return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows. Right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.${cold}`
     }
     return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.${cold}`
   }
 
   if (right) {
-    return `The left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount; the right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.`
+    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount. Right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.`
   }
   return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.`
 }

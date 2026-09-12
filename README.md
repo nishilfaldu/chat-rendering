@@ -1,6 +1,6 @@
 # Chat rendering
 
-A costed bench of ways to give TanStack Virtual row heights before rows mount: this browser's cache, server measurements, and prerendered HTML. Compare them at [http://localhost:3000](http://localhost:3000); the notes are at /docs.
+TanStack Virtual guesses 80 px, mounts the row, and measures it. This bench keeps that virtualizer and swaps the height source. IndexedDB, server tables, or prerendered HTML. Open [http://localhost:3000](http://localhost:3000). Notes are at /docs.
 
 ```sh
 pnpm install

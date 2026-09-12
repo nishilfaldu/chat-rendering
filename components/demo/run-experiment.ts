@@ -93,9 +93,7 @@ export async function runExperiment({
         }
       }
       if (pending.size && !cancelled.current)
-        throw new Error(
-          "The surface did not finish reopening within 30 seconds."
-        )
+        throw new Error("The pane did not finish reopening within 30 seconds.")
       return results
     }
 

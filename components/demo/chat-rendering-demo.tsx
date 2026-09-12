@@ -156,18 +156,16 @@ export function ChatRenderingDemo() {
           <div>
             <h1>Chat rendering</h1>
             <p>
-              TanStack Virtual can&apos;t know the height of a row it hasn&apos;t
-              rendered, so it guesses, mounts, measures, and corrects — on every
-              visit, for every reader. This bench keeps the library and moves
-              that knowledge earlier: into this browser&apos;s past, onto the
-              server, or into prerendered HTML. Then it prices each move.
+              TanStack Virtual has no height for a row it has not rendered. It
+              guesses 80 px, mounts the row, measures it, and corrects the
+              spacer. It does this on every visit. This bench keeps{" "}
+              <code>useVirtualizer</code>. Heights can come from IndexedDB,
+              server tables, or prerendered HTML. Read Layout fixed after mount,
+              then the cost line.
             </p>
             <p className="bench-subline">
-              10,000 messages · the same{" "}
-              <code>@tanstack/react-virtual</code>
-              {" "}
-              setup in every pane but one control · your machine&apos;s numbers,
-              not mine.
+              10,000 messages. Same <code>@tanstack/react-virtual</code> wrapper
+              in every pane except one control. Numbers come from this run.
             </p>
           </div>
           <Link className="bench-docs-link" href="/docs">
@@ -181,13 +179,12 @@ export function ChatRenderingDemo() {
         >
           <summary>What this is</summary>
           <p>
-            Not a new virtualizer. Every pane here runs{" "}
-            <code>useVirtualizer</code> (one control turns it off); only{" "}
-            <code>estimateSize</code> and <code>measureElement</code> change.
-            What differs is where the height comes from before the row mounts,
-            and what that source costs: bytes on the wire, storage writes,
-            server precompute, and the risk of a stale height. There is no free
-            option, which is the point.
+            Every pane runs <code>useVirtualizer</code> except the
+            no-virtualization control. Only <code>estimateSize</code> and{" "}
+            <code>measureElement</code> change. Height before mount is an 80 px
+            guess, a value from IndexedDB, a server table, or prerendered HTML.
+            Costs are gzipped payload, IndexedDB writes, server precompute, and
+            stale heights.
           </p>
         </details>
         <section className="bench-workbench" aria-label="Chat rendering bench">
@@ -344,8 +341,8 @@ export function ChatRenderingDemo() {
                   <SingleRunReadings run={currentRun} />
                 ) : (
                   <p>
-                    Run the bench to see layout fixed after mount, then the cost
-                    of each pane.
+                    Run Jump. Layout fixed after mount is the first reading.
+                    Then the cost line.
                   </p>
                 )}
               </div>

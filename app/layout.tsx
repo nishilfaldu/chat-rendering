@@ -16,7 +16,7 @@ const fontMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Chat rendering",
   description:
-    "Where TanStack Virtual gets its row heights: a costed bench of four strategies over a 10,000-message chat.",
+    "TanStack Virtual guesses 80 px until a row mounts. This bench times IndexedDB, server tables, and prerendered HTML as height sources.",
 }
 
 export default function RootLayout({

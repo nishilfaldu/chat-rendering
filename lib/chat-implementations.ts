@@ -1,44 +1,43 @@
 export const IMPLEMENTATIONS = {
   "every-message": {
     label: "No virtualization",
-    description:
-      "Renders all 10,000 messages at once. Upper bound on DOM, lower bound on jump time.",
-    cost: "Cost: 10,000 DOM rows · jump is cheap because everything is already mounted",
+    description: "Mounts all 10,000 messages. Jump does not need an estimate.",
+    cost: "Cost: 10,000 DOM rows. Jump is cheap because the rows are already mounted.",
     legacy: ["naive"],
   },
   measured: {
     label: "TanStack Virtual, measured after mount",
     description:
-      "80 px guess per row, measured once mounted, corrected in place. The library defaults.",
-    cost: "Cost: 80 px guess per unknown row · re-measure and correct on every visit",
+      "80 px guess per unmounted row. Measured after mount. Corrected in place.",
+    cost: "Cost: 80 px guess per unknown row. Re-measure and correct on every visit.",
     legacy: ["baseline"],
   },
   estimated: {
     label: "Content-type guess, never corrected",
     description:
-      "Clips overflow. Shows why zero corrections alone proves nothing.",
-    cost: "Cost: clipped overflow · a zero-correction reading can hide a wrong height",
+      "Clips overflow. Zero corrections can still be a wrong height.",
+    cost: "Cost: clipped overflow. A zero-correction reading can hide a wrong height.",
     legacy: ["height-class"],
   },
   "saved-in-browser": {
-    label: "Heights this browser measured before (IndexedDB)",
+    label: "Heights this browser already measured (IndexedDB)",
     description:
-      "Reuses measured heights and rendered content after this browser has seen them once.",
-    cost: "Cost: IndexedDB reads and writes · per device · per width bucket",
+      "Reads heights and HTML from IndexedDB after this browser has measured them.",
+    cost: "Cost: IndexedDB reads and writes. Per device. Per width bucket.",
     legacy: ["orbit"],
   },
   "saved-measurements": {
     label: "Heights measured on the server",
     description:
-      "Loads measured message heights from the server for each supported content width.",
-    cost: "Cost: extra gzipped payload · 200,000 precomputed heights · client still re-measures and posts corrections",
+      "Ships 20 per-bucket height tables with the page. Binary search for a row at an offset.",
+    cost: "Cost: extra gzipped payload. 200,000 precomputed heights. Client still re-measures and posts corrections.",
     legacy: ["server-heights"],
   },
   "saved-html": {
     label: "Heights + rendered HTML from the server",
     description:
-      "Loads saved message measurements and fetches prerendered content as you scroll.",
-    cost: "Cost: HTML fetch on jump · 160-entry working set",
+      "Same tables plus prerendered HTML. Jump fetches bodies into a 160-entry working set.",
+    cost: "Cost: HTML fetch on jump. 160-entry working set.",
     legacy: ["server-index"],
   },
 } as const
@@ -89,12 +88,15 @@ export function conversationPath(mode: ChatAppId): string {
   return `/embed/${mode}`
 }
 
-export function implementationCost(mode: ChatAppId, extraKbGz?: number): string {
+export function implementationCost(
+  mode: ChatAppId,
+  extraKbGz?: number
+): string {
   if (mode === "saved-measurements" && extraKbGz !== undefined) {
-    return `Cost: +${extraKbGz} KB payload (gz) · 200,000 precomputed heights · client still re-measures and posts corrections`
+    return `Cost: +${extraKbGz} KB payload (gz). 200,000 precomputed heights. Client still re-measures and posts corrections.`
   }
   if (mode === "saved-html" && extraKbGz !== undefined) {
-    return `Cost: +${extraKbGz} KB payload (gz) · HTML fetch on jump · 160-entry working set`
+    return `Cost: +${extraKbGz} KB payload (gz). HTML fetch on jump. 160-entry working set.`
   }
   return IMPLEMENTATIONS[mode].cost
 }
