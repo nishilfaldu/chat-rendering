@@ -1,6 +1,6 @@
 # Chat rendering
 
-Six ways to keep a long conversation responsive. Compare them in the workbench, then open `/docs` in the app for the tradeoffs.
+How to render chat better than just virtualization alone. Open [http://localhost:3000](http://localhost:3000). Notes are at /docs.
 
 ```sh
 pnpm install

@@ -1,38 +1,26 @@
 export const IMPLEMENTATIONS = {
   "every-message": {
-    label: "Every message",
-    description:
-      "Renders all 10,000 messages at once: simple, but expensive at scale.",
+    label: "No virtualization",
     legacy: ["naive"],
   },
   measured: {
-    label: "Measured in the browser",
-    description:
-      "Virtualizes 10,000 messages from one rough estimate, then fixes each height in the browser.",
+    label: "TanStack Virtual",
     legacy: ["baseline"],
   },
   estimated: {
-    label: "Estimated by content type",
-    description:
-      "Uses fixed estimates for each content type. This control can clip messages because it does not correct its estimates.",
+    label: "Content-type guess, never corrected",
     legacy: ["height-class"],
   },
   "saved-in-browser": {
-    label: "Saved in this browser",
-    description:
-      "Reuses measured heights and rendered content after this browser has seen them once.",
+    label: "Browser cache (IndexedDB)",
     legacy: ["orbit"],
   },
   "saved-measurements": {
-    label: "Saved measurements",
-    description:
-      "Loads measured message heights from the server for each supported content width.",
+    label: "Precomputed (fetched from server)",
     legacy: ["server-heights"],
   },
   "saved-html": {
-    label: "Saved measurements + HTML",
-    description:
-      "Loads saved message measurements and fetches prerendered content as you scroll.",
+    label: "Precomputed + prerendered HTML",
     legacy: ["server-index"],
   },
 } as const
@@ -41,11 +29,12 @@ export type ChatAppId = keyof typeof IMPLEMENTATIONS
 
 export const CHAT_APP_IDS = Object.keys(IMPLEMENTATIONS) as ChatAppId[]
 
-export const APP_LINKS = CHAT_APP_IDS.map((id) => ({
-  id,
-  label: IMPLEMENTATIONS[id].label,
-  description: IMPLEMENTATIONS[id].description,
-}))
+export const PICKER_IDS = [
+  "measured",
+  "saved-in-browser",
+  "saved-measurements",
+  "saved-html",
+] as const satisfies readonly ChatAppId[]
 
 const LEGACY_TO_ID = Object.fromEntries(
   CHAT_APP_IDS.flatMap((id) =>

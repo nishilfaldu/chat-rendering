@@ -17,7 +17,6 @@ import {
   type Reading,
 } from "./iframe-probe"
 import { runExperiment, type CurrentRun } from "./run-experiment"
-import { ReadingTip } from "./reading-tip"
 import { ComparisonReadings, SingleRunReadings } from "./run-readings"
 import { SCENARIOS, type Scenario } from "./scenarios"
 
@@ -27,11 +26,11 @@ export function ChatRenderingDemo() {
     useRef<HTMLIFrameElement>(null),
   ]
   const [modes, setModes] = useState<[ChatAppId, ChatAppId]>([
-    "saved-measurements",
     "measured",
+    "saved-measurements",
   ])
-  const [compare, setCompare] = useState(false)
-  const [scenario, setScenario] = useState<Scenario>("scroll")
+  const [compare, setCompare] = useState(true)
+  const [scenario, setScenario] = useState<Scenario>("jump")
   const [readings, setReadings] = useState<Reading[]>([
     initialReading,
     initialReading,
@@ -131,15 +130,13 @@ export function ChatRenderingDemo() {
       if (!cancelled.current) {
         setCurrentRun({ scenario, results })
       } else {
-        setRunError(
-          "Stopped. Run the experiment again for a complete measurement."
-        )
+        setRunError("Stopped. Run the bench again for a complete measurement.")
       }
     } catch (error) {
       setRunError(
         error instanceof Error
           ? error.message
-          : "The experiment could not finish. Reopen the surface and try again."
+          : "The bench could not finish. Reopen the pane and try again."
       )
     } finally {
       setBusy(false)
@@ -155,16 +152,13 @@ export function ChatRenderingDemo() {
         <header className="bench-header">
           <div>
             <h1>Chat rendering</h1>
-            <p>An experiment in keeping long conversations responsive.</p>
+            <p>How to render chat better than just virtualization alone.</p>
           </div>
           <Link className="bench-docs-link" href="/docs">
-            How it works
+            Notes
           </Link>
         </header>
-        <section
-          className="bench-workbench"
-          aria-label="Chat rendering experiment"
-        >
+        <section className="bench-workbench" aria-label="Chat rendering bench">
           <div className={`bench-approach ${compare ? "is-comparing" : ""}`}>
             <div className="bench-pickers">
               <ImplementationPicker
@@ -203,7 +197,7 @@ export function ChatRenderingDemo() {
             </label>
           </div>
           <div className="bench-toolbar">
-            <div className="bench-tabs" aria-label="Experiment">
+            <div className="bench-tabs" aria-label="Bench">
               {SCENARIOS.map((item) => (
                 <button
                   key={item.id}
@@ -275,19 +269,19 @@ export function ChatRenderingDemo() {
                     ) : null}
                   </div>
                   <div className="bench-surface-footer">
-                    <ReadingTip tip="Messages in this conversation.">
+                    <span>
                       {formatReading(
                         readings[index]?.snapshot?.messageCount,
                         " messages",
                         0
                       )}
-                    </ReadingTip>
-                    <ReadingTip tip="Message rows currently in the DOM.">
+                    </span>
+                    <span>
                       {formatReading(readings[index]?.mounted, " mounted", 0)}
-                    </ReadingTip>
-                    <ReadingTip tip="Width of the conversation pane.">
+                    </span>
+                    <span>
                       {formatReading(readings[index]?.width, " px", 0)}
-                    </ReadingTip>
+                    </span>
                     <button
                       disabled={busy || !ready}
                       aria-label={`Jump to latest in conversation ${index + 1}`}
@@ -317,7 +311,10 @@ export function ChatRenderingDemo() {
                 ) : currentRun ? (
                   <SingleRunReadings run={currentRun} />
                 ) : (
-                  <p>Run an experiment to see its measurements.</p>
+                  <p>
+                    Run Jump. Layout fixed after mount is the first reading.
+                    Then payload.
+                  </p>
                 )}
               </div>
             </aside>

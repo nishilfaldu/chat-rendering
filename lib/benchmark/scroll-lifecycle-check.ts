@@ -35,7 +35,9 @@ try {
   console.log(
     await page.evaluate(() => ({
       font: getComputedStyle(document.querySelector("h1")!).fontFamily,
-      mono: getComputedStyle(document.querySelector("dd")!).fontFamily,
+      mono: getComputedStyle(
+        document.querySelector(".bench-comparison-readings td, dd")!
+      ).fontFamily,
     }))
   )
   assert.deepEqual(errors, [], "scrolling must not trigger lifecycle errors")
