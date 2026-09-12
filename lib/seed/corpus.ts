@@ -1,88 +1,70 @@
 export const SHORTS = [
-  "Can you show the relevant code?",
-  "What happens when the window gets narrower?",
-  "That works. Let's check a longer conversation.",
-  "Can we keep the same message in view?",
-  "The reading position changes when I scroll up.",
-  "How much of the history is mounted right now?",
-  "Can we jump directly to message 8,000?",
-  "The code block makes this message much taller.",
-  "Try reopening the conversation with the saved measurements.",
-  "Let's compare this with rendering every message.",
+  "Did the deploy finish?",
+  "Can you paste the failing test?",
+  "That works on my machine now.",
+  "Where is the config for the staging host?",
+  "The timeout is still too low for cold starts.",
+  "How many retries did it take?",
+  "I'll open a PR after the tests pass.",
+  "The logs only show the last twenty lines.",
+  "We should pin the Node version.",
+  "Does this work with an empty cache?",
 ] as const
 
 export const PARAGRAPHS = [
-  "A conversation can change while someone is reading it. New text should stay in view when the reader is following the latest response. Once they scroll into history, incoming tokens should leave their reading position alone.",
-  "Message height depends on the content and the available width. Paragraphs wrap, code blocks have different line counts, and images take up space. A measurement is useful only when it describes the layout we are actually rendering.",
-  "The browser can save measurements for a later visit. That avoids repeating some work, but a first visit still needs estimates. We should compare both cases and record how much of the conversation the browser has already seen.",
-  "Server measurements are shared across visits. The client still checks the real content because a font, layout change, or edited message can invalidate a saved height. Missing measurements should fall back to estimates and recover as content appears.",
-  "We should measure arrival time and reading-position stability separately. A message can appear quickly and move afterward. Frame intervals, visible content, and retained memory help explain the rest of the interaction.",
+  "The release notes mention a new retry budget for the search indexer. I tried a cold start on staging and the first query still took long enough that the client showed a spinner, then a cached result from an older build. If we ship this, we should say which cache the client is reading and how long a miss is allowed to wait.",
+  "I compared the two query plans. The nested loop is fine for a few hundred rows, but the join to the events table grows with the retention window. Filtering on day first keeps the working set in memory. The covering index helps the point lookups; it does not help the report that scans a month.",
+  "The webhook handler acknowledges before the side effects finish. That is fine when the queue is healthy. Last night the worker stalled, so the dashboard showed a success that never landed in billing. We should record the intent, then mark it applied only after the write, and make the replay idempotent on the provider id.",
+  "The design review asked for a denser table on desktop and a stacked card on a phone. The same fields have to wrap at 320 px without clipping the status pill. I would rather drop the secondary timestamp than shrink the type. The export CSV can keep the full precision.",
+  "We can keep the feature flag on for the internal tenants this week. The public rollout should wait until the backfill of the new column finishes; otherwise the empty state looks like a permissions error. I will post in the channel when the last shard is done.",
 ] as const
 
 export const CODE_SAMPLES: ReadonlyArray<{ lang: string; text: string }> = [
   {
     lang: "ts",
-    text: `export function widthBucket(px: number): 400 | 800 | 1440 {
-  if (px < 600) return 400
-  if (px < 1120) return 800
-  return 1440
+    text: `export function parseRetryAfter(header: string | null): number {
+  if (!header) return 1_000
+  const seconds = Number(header)
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1_000
+  const date = Date.parse(header)
+  if (Number.isNaN(date)) return 1_000
+  return Math.max(0, date - Date.now())
 }
 
-export function estimateSize(kind: 'xs' | 'sm' | 'md' | 'lg' | 'xl'): number {
-  switch (kind) {
-    case 'xs':
-      return 52
-    case 'sm':
-      return 80
-    case 'md':
-      return 140
-    case 'lg':
-      return 260
-    case 'xl':
-      return 420
-    default: {
-      const _exhaustive: never = kind
-      return _exhaustive
-    }
-  }
+export function backoff(attempt: number, baseMs = 250, capMs = 8_000): number {
+  const exp = Math.min(capMs, baseMs * 2 ** attempt)
+  return Math.floor(exp / 2 + Math.random() * (exp / 2))
 }`,
   },
   {
     lang: "tsx",
-    text: `const virtualizer = useVirtualizer({
-  count: messages.length,
-  getScrollElement: () => parentRef.current,
-  estimateSize: () => 72,
-  getItemKey: (index) => messages[index]!.id,
-})
+    text: `function StatusPill({ value }: { value: "queued" | "running" | "done" }) {
+  return (
+    <span data-status={value} className="status-pill">
+      {value}
+    </span>
+  )
+}
 
-return (
-  <div ref={parentRef} className="h-full overflow-auto">
-    <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-      {virtualizer.getVirtualItems().map((item) => (
-        <div
-          key={item.key}
-          data-index={item.index}
-          ref={virtualizer.measureElement}
-          style={{
-            position: 'absolute',
-            top: 0,
-            width: '100%',
-            transform: \`translateY(\${item.start}px)\`,
-          }}
-        >
-          <MessageBubble
-            message={messages[item.index]!}
-            content={{
-              kind: 'markdown',
-              markdown: messages[item.index]!.text,
-            }}
-          />
-        </div>
-      ))}
-    </div>
-  </div>
-)`,
+export function JobRow({
+  name,
+  value,
+  updatedAt,
+}: {
+  name: string
+  value: "queued" | "running" | "done"
+  updatedAt: string
+}) {
+  return (
+    <tr>
+      <th scope="row">{name}</th>
+      <td>
+        <StatusPill value={value} />
+      </td>
+      <td>{updatedAt}</td>
+    </tr>
+  )
+}`,
   },
   {
     lang: "python",
@@ -93,40 +75,39 @@ return (
     return h
 
 
-def settle(last_measure_at: dict[str, float], now: float, window_ms: float = 500) -> set[str]:
-    settled = set()
-    for key, ts in last_measure_at.items():
-        if now - ts >= window_ms:
-            settled.add(key)
-    return settled`,
+def chunks(items: list[str], size: int) -> list[list[str]]:
+    return [items[i : i + size] for i in range(0, len(items), size)]`,
   },
   {
     lang: "sql",
-    text: `CREATE TABLE messages (
+    text: `CREATE TABLE jobs (
   id TEXT PRIMARY KEY,
-  session_id TEXT NOT NULL,
-  role TEXT NOT NULL,
-  timestamp INTEGER NOT NULL,
-  kind TEXT NOT NULL,
-  text TEXT NOT NULL,
-  height_class TEXT NOT NULL,
-  sort_index INTEGER NOT NULL
+  tenant_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  provider_id TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 
-CREATE INDEX messages_session_sort ON messages(session_id, sort_index);
+CREATE INDEX jobs_tenant_status ON jobs(tenant_id, status);
 
-SELECT m.id, m.timestamp, m.height_class, h.px AS measured_px
-FROM messages m
-LEFT JOIN height_measurements h
-  ON h.message_id = m.id AND h.width_bucket = :bucket
-ORDER BY m.sort_index;`,
+SELECT j.id, j.status, j.updated_at
+FROM jobs j
+WHERE j.tenant_id = :tenant
+  AND j.status IN ('queued', 'running')
+ORDER BY j.created_at;`,
   },
   {
     lang: "rust",
-    text: `fn measure_element(entry: Option<ResizeObserverEntry>, cached: Option<f64>, dom: f64) -> f64 {
-    match entry {
-        None => cached.filter(|v| *v > 0.0).unwrap_or(dom),
-        Some(_) => dom,
+    text: `fn clamp_window(start: u64, end: u64, max_span: u64) -> (u64, u64) {
+    if end < start {
+        return (start, start);
+    }
+    let span = end.saturating_sub(start);
+    if span <= max_span {
+        (start, end)
+    } else {
+        (end.saturating_sub(max_span), end)
     }
 }`,
   },
@@ -147,21 +128,22 @@ ORDER BY m.sort_index;`,
   },
   {
     lang: "bash",
-    text: `pnpm seed
-pnpm --filter naive dev --port 3001
-pnpm --filter baseline dev --port 3002
-pnpm --filter orbit-style dev --port 3003
-pnpm --filter server-index dev --port 3004`,
+    text: `set -euo pipefail
+pnpm lint
+pnpm typecheck
+pnpm build
+curl -fsS "$STAGING_URL/api/health" >/dev/null
+echo "staging health ok"`,
   },
   {
     lang: "json",
     text: `{
-  "app": "orbit-style",
-  "cache": "warm",
-  "firstPaintMs": 184,
-  "scrollFps": 56.2,
-  "jumpTo": { "n": 8000, "ms": 12.4 },
-  "domNodes": 186
+  "job": "index-rebuild",
+  "tenant": "acme",
+  "attempt": 2,
+  "status": "running",
+  "startedAt": "2026-03-15T18:04:12Z",
+  "rows": { "scanned": 18420, "written": 18311 }
 }`,
   },
 ]
