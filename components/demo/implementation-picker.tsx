@@ -1,5 +1,5 @@
 import {
-  APP_LINKS,
+  IMPLEMENTATION_GROUPS,
   IMPLEMENTATIONS,
   type ChatAppId,
 } from "@/lib/chat-implementations"
@@ -35,22 +35,37 @@ export function ImplementationPicker({
         <span className="bench-picker-value">{selected.label}</span>
         <ChevronDown size={12} aria-hidden="true" />
       </button>
-      <div
-        className="bench-picker-menu"
-        role="listbox"
-        aria-label="Implementation"
-      >
-        {APP_LINKS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="option"
-            aria-selected={item.id === value}
-            disabled={disabled}
-            onClick={() => onChange(item.id)}
+      <div className="bench-picker-menu" role="listbox" aria-label="Height source">
+        {IMPLEMENTATION_GROUPS.map((group) => (
+          <div
+            key={group.id}
+            className="bench-picker-group"
+            role="group"
+            aria-label={group.label}
           >
-            {item.label}
-          </button>
+            <p className="bench-picker-group-label">{group.label}</p>
+            {group.ids.map((id) => {
+              const item = IMPLEMENTATIONS[id]
+              const isSelected = id === value
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  disabled={disabled}
+                  onClick={() => onChange(id)}
+                >
+                  <span className="bench-picker-item-label">{item.label}</span>
+                  {isSelected ? (
+                    <span className="bench-picker-item-desc">
+                      {item.description}
+                    </span>
+                  ) : null}
+                </button>
+              )
+            })}
+          </div>
         ))}
       </div>
     </div>

@@ -1,5 +1,6 @@
-import { Geist, Geist_Mono } from "next/font/google"
 import type { Metadata } from "next"
+
+import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -15,7 +16,7 @@ const fontMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Chat rendering",
   description:
-    "An experiment in rendering long chat conversations. Compare scrolling, streaming, and saved message measurements.",
+    "Where TanStack Virtual gets its row heights: a costed bench of four strategies over a 10,000-message chat.",
 }
 
 export default function RootLayout({

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { IMPLEMENTATIONS } from "@/lib/chat-implementations"
+import { IMPLEMENTATIONS, implementationCost } from "@/lib/chat-implementations"
+import { extraPayloadKbGz } from "@/lib/payload-costs"
+import { WIDTH_BUCKETS } from "@/lib/seed/types"
 
 import { formatReading, type RunResult } from "./iframe-probe"
 import { ReadingTip } from "./reading-tip"
@@ -15,35 +16,37 @@ type ReadingField = {
   unit: string
   digits?: number
 }
+
+const layoutFixed: ReadingField = {
+  label: "Layout fixed after mount",
+  tip: "Sum of the absolute height adjustments after rows mounted, in pixels. This is internal layout work, not the distance your reading position moved.",
+  value: (result) => result.correctedPx,
+  unit: "px",
+}
+
+const rowsRemeasured: ReadingField = {
+  label: "Rows re-measured",
+  tip: "Recorded adjustments when a measured message height differs from its estimate or saved height. Anchoring can keep content still even when corrections occur.",
+  value: (result) => result.corrections,
+  unit: "",
+  digits: 0,
+}
+
 const frameInterval: ReadingField = {
   label: "Frame interval p95",
   tip: "95% of measured gaps between animation frames were this short or shorter. Larger gaps can feel like stutter. These are browser callback intervals, not isolated rendering costs.",
   value: (result) => result.frameP95,
   unit: "ms",
 }
+
 const longestFrame: ReadingField = {
   label: "Longest frame gap",
   tip: "The largest measured gap between animation frames during this run. This can reveal a brief pause that p95 misses. Smaller is better.",
   value: (result) => result.longestFrame,
   unit: "ms",
 }
-const corrections: ReadingField[] = [
-  {
-    label: "Height corrections",
-    tip: "Recorded adjustments when a measured message height differs from its estimate or saved height. Anchoring can keep content still even when corrections occur.",
-    value: (result) => result.corrections,
-    unit: "",
-    digits: 0,
-  },
-  {
-    label: "Total corrected",
-    tip: "Sum of the absolute height adjustments during this run, in pixels. This is internal layout work, not the distance your reading position moved.",
-    value: (result) => result.correctedPx,
-    unit: "px",
-  },
-]
 
-export function experimentReadingFields(scenario: Scenario): ReadingField[] {
+function scenarioReadingFields(scenario: Scenario): ReadingField[] {
   switch (scenario) {
     case "reopen":
       return [
@@ -63,7 +66,6 @@ export function experimentReadingFields(scenario: Scenario): ReadingField[] {
         },
       ]
     case "jump":
-    case "latest":
       return [
         {
           label: "Jump time",
@@ -80,7 +82,7 @@ export function experimentReadingFields(scenario: Scenario): ReadingField[] {
         },
         {
           label: "Landing offset",
-          tip: "Final distance from the intended viewport edge: the top for Jump, the bottom for Latest. Zero means the target landed exactly.",
+          tip: "Final distance from the intended viewport edge: the top for Jump. Zero means the target landed exactly.",
           value: (result) => result.landing,
           unit: "px",
         },
@@ -113,8 +115,17 @@ export function experimentReadingFields(scenario: Scenario): ReadingField[] {
           unit: "px",
         },
       ]
+    default: {
+      const _exhaustive: never = scenario
+      return _exhaustive
+    }
   }
 }
+
+function headlineFields(scenario: Scenario): ReadingField[] {
+  return [layoutFixed, rowsRemeasured, ...scenarioReadingFields(scenario)]
+}
+
 function value(field: ReadingField, result: RunResult) {
   return formatReading(
     field.value(result),
@@ -122,6 +133,7 @@ function value(field: ReadingField, result: RunResult) {
     field.digits ?? 1
   )
 }
+
 function FrameReference({ scenario }: { scenario: Scenario }) {
   return scenario === "scroll" || scenario === "stream" ? (
     <p className="bench-frame-reference">
@@ -129,6 +141,68 @@ function FrameReference({ scenario }: { scenario: Scenario }) {
     </p>
   ) : null
 }
+
+function CostLines({ run }: { run: CurrentRun }) {
+  return (
+    <ul className="bench-cost-lines">
+      {run.results.map((result, index) => (
+        <li key={`${result.mode}-${index}`}>
+          <span className="bench-cost-pane">
+            {IMPLEMENTATIONS[result.mode].label}.
+          </span>{" "}
+          {implementationCost(result.mode, extraPayloadKbGz(result.mode))}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function pxOf(result: RunResult | undefined) {
+  return result?.correctedPx ?? 0
+}
+
+function rowsOf(result: RunResult | undefined) {
+  return result?.corrections ?? 0
+}
+
+export function runInterpretation(run: CurrentRun): string {
+  const left = run.results[0]
+  const right = run.results[1]
+  if (!left) return ""
+
+  if (run.scenario === "jump" && right) {
+    const tables =
+      right.mode === "saved-measurements" || right.mode === "saved-html"
+        ? `but shipped ${WIDTH_BUCKETS.length} width tables with the page`
+        : `and ${implementationCost(right.mode, extraPayloadKbGz(right.mode)).replace(/^Cost: /, "")}`
+    return `Same landing, different bill: the left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing and will do it again next visit; the right pane fixed ${pxOf(right)} px ${tables}.`
+  }
+
+  if (run.scenario === "reopen" && right) {
+    const leftMs = left.elapsed == null ? "—" : `${Math.round(left.elapsed)} ms`
+    const rightMs =
+      right.elapsed == null ? "—" : `${Math.round(right.elapsed)} ms`
+    return `The left pane appeared in ${leftMs}; the right pane in ${rightMs}. Server heights can appear later than the baseline on this visit because all ${WIDTH_BUCKETS.length} width tables arrive with the page.`
+  }
+
+  if (run.scenario === "scroll") {
+    const idb = run.results.some((result) => result.mode === "saved-in-browser")
+    const cold =
+      idb
+        ? " On a cold IndexedDB cache, those writes compete with scrolling; that cost belongs in the cost line, not off-stage."
+        : ""
+    if (right) {
+      return `The left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows; the right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.${cold}`
+    }
+    return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.${cold}`
+  }
+
+  if (right) {
+    return `The left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount; the right pane fixed ${pxOf(right)} px across ${rowsOf(right)} rows.`
+  }
+  return `This pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after mount.`
+}
+
 function ReadingTable({
   run,
   fields,
@@ -165,61 +239,27 @@ function ReadingTable({
     </table>
   )
 }
-function RenderingDetails({
-  run,
-  compare = false,
-}: {
-  run: CurrentRun
-  compare?: boolean
-}) {
-  const [open, setOpen] = useState(true)
-  return (
-    <details
-      className="bench-rendering-details"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary>Rendering details</summary>
-      {compare ? (
-        <ReadingTable
-          run={run}
-          fields={corrections}
-          label="Rendering details comparison"
-        />
-      ) : (
-        run.results.map((result, index) => (
-          <dl key={index}>
-            {corrections.map((field) => (
-              <div key={field.label}>
-                <dt>
-                  <ReadingTip tip={field.tip}>{field.label}</ReadingTip>
-                </dt>
-                <dd>{value(field, result)}</dd>
-              </div>
-            ))}
-          </dl>
-        ))
-      )}
-    </details>
-  )
-}
+
 export function ComparisonReadings({ run }: { run: CurrentRun }) {
   return (
     <>
+      <p className="bench-interpretation">{runInterpretation(run)}</p>
       <ReadingTable
         run={run}
-        fields={experimentReadingFields(run.scenario)}
-        label="Experiment comparison"
+        fields={headlineFields(run.scenario)}
+        label="Bench comparison"
       />
       <FrameReference scenario={run.scenario} />
-      <RenderingDetails run={run} compare />
+      <CostLines run={run} />
     </>
   )
 }
+
 export function SingleRunReadings({ run }: { run: CurrentRun }) {
-  const fields = experimentReadingFields(run.scenario)
+  const fields = headlineFields(run.scenario)
   return (
     <>
+      <p className="bench-interpretation">{runInterpretation(run)}</p>
       {run.results.map((result, index) => (
         <dl key={index}>
           {fields.map((field, fieldIndex) => (
@@ -254,7 +294,7 @@ export function SingleRunReadings({ run }: { run: CurrentRun }) {
           drift.
         </p>
       ) : null}
-      <RenderingDetails run={run} />
+      <CostLines run={run} />
     </>
   )
 }

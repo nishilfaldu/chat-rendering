@@ -1,6 +1,6 @@
 # Chat rendering
 
-Six ways to keep a long conversation responsive. Compare them in the workbench, then open `/docs` in the app for the tradeoffs.
+A costed bench of ways to give TanStack Virtual row heights before rows mount: this browser's cache, server measurements, and prerendered HTML. Compare them at [http://localhost:3000](http://localhost:3000); the notes are at /docs.
 
 ```sh
 pnpm install

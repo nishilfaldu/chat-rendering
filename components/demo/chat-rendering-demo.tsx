@@ -19,7 +19,7 @@ import {
 import { runExperiment, type CurrentRun } from "./run-experiment"
 import { ReadingTip } from "./reading-tip"
 import { ComparisonReadings, SingleRunReadings } from "./run-readings"
-import { SCENARIOS, type Scenario } from "./scenarios"
+import { SCENARIOS, THEN_RUN, type Scenario } from "./scenarios"
 
 export function ChatRenderingDemo() {
   const refs = [
@@ -27,11 +27,11 @@ export function ChatRenderingDemo() {
     useRef<HTMLIFrameElement>(null),
   ]
   const [modes, setModes] = useState<[ChatAppId, ChatAppId]>([
-    "saved-measurements",
     "measured",
+    "saved-measurements",
   ])
-  const [compare, setCompare] = useState(false)
-  const [scenario, setScenario] = useState<Scenario>("scroll")
+  const [compare, setCompare] = useState(true)
+  const [scenario, setScenario] = useState<Scenario>("jump")
   const [readings, setReadings] = useState<Reading[]>([
     initialReading,
     initialReading,
@@ -43,6 +43,7 @@ export function ChatRenderingDemo() {
   const [currentRun, setCurrentRun] = useState<CurrentRun | null>(null)
   const [marked, setMarked] = useState(false)
   const [openPicker, setOpenPicker] = useState<0 | 1 | null>(null)
+  const [whatOpen, setWhatOpen] = useState(true)
   const cancelled = useRef(false)
   const selected = SCENARIOS.find((item) => item.id === scenario)!
   const count = compare ? 2 : 1
@@ -130,16 +131,15 @@ export function ChatRenderingDemo() {
       })
       if (!cancelled.current) {
         setCurrentRun({ scenario, results })
+        setWhatOpen(false)
       } else {
-        setRunError(
-          "Stopped. Run the experiment again for a complete measurement."
-        )
+        setRunError("Stopped. Run the bench again for a complete measurement.")
       }
     } catch (error) {
       setRunError(
         error instanceof Error
           ? error.message
-          : "The experiment could not finish. Reopen the surface and try again."
+          : "The bench could not finish. Reopen the pane and try again."
       )
     } finally {
       setBusy(false)
@@ -155,16 +155,40 @@ export function ChatRenderingDemo() {
         <header className="bench-header">
           <div>
             <h1>Chat rendering</h1>
-            <p>An experiment in keeping long conversations responsive.</p>
+            <p>
+              TanStack Virtual can&apos;t know the height of a row it hasn&apos;t
+              rendered, so it guesses, mounts, measures, and corrects — on every
+              visit, for every reader. This bench keeps the library and moves
+              that knowledge earlier: into this browser&apos;s past, onto the
+              server, or into prerendered HTML. Then it prices each move.
+            </p>
+            <p className="bench-subline">
+              10,000 messages · the same{" "}
+              <code>@tanstack/react-virtual</code> setup in every pane but one
+              control · your machine&apos;s numbers, not mine.
+            </p>
           </div>
           <Link className="bench-docs-link" href="/docs">
-            How it works
+            Notes
           </Link>
         </header>
-        <section
-          className="bench-workbench"
-          aria-label="Chat rendering experiment"
+        <details
+          className="bench-what"
+          open={whatOpen}
+          onToggle={(event) => setWhatOpen(event.currentTarget.open)}
         >
+          <summary>What this is</summary>
+          <p>
+            Not a new virtualizer. Every pane here runs{" "}
+            <code>useVirtualizer</code> (one control turns it off); only{" "}
+            <code>estimateSize</code> and <code>measureElement</code> change.
+            What differs is where the height comes from before the row mounts,
+            and what that source costs: bytes on the wire, storage writes,
+            server precompute, and the risk of a stale height. There is no free
+            option, which is the point.
+          </p>
+        </details>
+        <section className="bench-workbench" aria-label="Chat rendering bench">
           <div className={`bench-approach ${compare ? "is-comparing" : ""}`}>
             <div className="bench-pickers">
               <ImplementationPicker
@@ -203,7 +227,7 @@ export function ChatRenderingDemo() {
             </label>
           </div>
           <div className="bench-toolbar">
-            <div className="bench-tabs" aria-label="Experiment">
+            <div className="bench-tabs" aria-label="Bench">
               {SCENARIOS.map((item) => (
                 <button
                   key={item.id}
@@ -317,11 +341,37 @@ export function ChatRenderingDemo() {
                 ) : currentRun ? (
                   <SingleRunReadings run={currentRun} />
                 ) : (
-                  <p>Run an experiment to see its measurements.</p>
+                  <p>
+                    Run the bench to see layout fixed after mount, then the cost
+                    of each pane.
+                  </p>
                 )}
               </div>
             </aside>
           </div>
+          <nav className="bench-then-run" aria-label="Then run">
+            <p>Then run</p>
+            <ul>
+              {THEN_RUN.filter((item) => item.id !== scenario).map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setScenario(item.id)
+                      setCurrentRun(null)
+                      setRunError(null)
+                      setMarked(false)
+                      setOpenPicker(null)
+                    }}
+                  >
+                    <span>{item.title}</span>
+                    <span>{item.blurb}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </section>
       </div>
     </main>
