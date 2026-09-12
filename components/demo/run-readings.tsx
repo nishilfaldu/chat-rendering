@@ -1,7 +1,7 @@
 "use client"
 
-import { IMPLEMENTATIONS, implementationCost } from "@/lib/chat-implementations"
-import { extraPayloadKbGz } from "@/lib/payload-costs"
+import { IMPLEMENTATIONS } from "@/lib/chat-implementations"
+import { extraPayloadKbGz, PRODUCTION_EMBED_GZ_KB } from "@/lib/payload-costs"
 import { WIDTH_BUCKETS } from "@/lib/seed/types"
 
 import { formatReading, type RunResult } from "./iframe-probe"
@@ -122,8 +122,30 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
   }
 }
 
+const payload: ReadingField = {
+  label: "Payload (gz)",
+  tip: "Gzipped embed HTML from the production build.",
+  value: (result) => PRODUCTION_EMBED_GZ_KB[result.mode],
+  unit: "KB",
+  digits: 0,
+}
+
+const extraPayload: ReadingField = {
+  label: "Extra payload (gz)",
+  tip: "Gzipped embed HTML minus the baseline pane.",
+  value: (result) => extraPayloadKbGz(result.mode) ?? 0,
+  unit: "KB",
+  digits: 0,
+}
+
 function headlineFields(scenario: Scenario): ReadingField[] {
-  return [layoutFixed, rowsRemeasured, ...scenarioReadingFields(scenario)]
+  return [
+    layoutFixed,
+    rowsRemeasured,
+    ...scenarioReadingFields(scenario),
+    payload,
+    extraPayload,
+  ]
 }
 
 function value(field: ReadingField, result: RunResult) {
@@ -142,21 +164,6 @@ function FrameReference({ scenario }: { scenario: Scenario }) {
   ) : null
 }
 
-function CostLines({ run }: { run: CurrentRun }) {
-  return (
-    <ul className="bench-cost-lines">
-      {run.results.map((result, index) => (
-        <li key={`${result.mode}-${index}`}>
-          <span className="bench-cost-pane">
-            {IMPLEMENTATIONS[result.mode].label}.
-          </span>{" "}
-          {implementationCost(result.mode, extraPayloadKbGz(result.mode))}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 function pxOf(result: RunResult | undefined) {
   return formatReading(result?.correctedPx ?? 0, "", 1)
 }
@@ -171,14 +178,7 @@ export function runInterpretation(run: CurrentRun): string {
   if (!left) return ""
 
   if (run.scenario === "jump" && right) {
-    const bill =
-      right.mode === "saved-measurements" || right.mode === "saved-html"
-        ? `It shipped heights for ${WIDTH_BUCKETS.length} widths with the page.`
-        : implementationCost(right.mode, extraPayloadKbGz(right.mode)).replace(
-            /^Cost: /,
-            ""
-          )
-    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing. Next visit it will do that again. Right pane fixed ${pxOf(right)} px. ${bill}`
+    return `Left pane fixed ${pxOf(left)} px across ${rowsOf(left)} rows after landing. Next visit it will do that again. Right pane fixed ${pxOf(right)} px.`
   }
 
   if (run.scenario === "reopen" && right) {
@@ -252,42 +252,19 @@ export function ComparisonReadings({ run }: { run: CurrentRun }) {
         label="Bench comparison"
       />
       <FrameReference scenario={run.scenario} />
-      <CostLines run={run} />
     </>
   )
 }
 
 export function SingleRunReadings({ run }: { run: CurrentRun }) {
-  const fields = headlineFields(run.scenario)
   return (
     <>
       <p className="bench-interpretation">{runInterpretation(run)}</p>
-      {run.results.map((result, index) => (
-        <dl key={index}>
-          {fields.map((field, fieldIndex) => (
-            <div
-              key={field.label}
-              className={fieldIndex === 0 ? "bench-primary-reading" : undefined}
-            >
-              <dt>
-                <ReadingTip tip={field.tip}>{field.label}</ReadingTip>
-              </dt>
-              <dd>
-                {fieldIndex === 0 ? (
-                  <>
-                    {formatReading(field.value(result), "", field.digits ?? 1)}
-                    {field.value(result) !== null && field.unit ? (
-                      <span> {field.unit}</span>
-                    ) : null}
-                  </>
-                ) : (
-                  value(field, result)
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ))}
+      <ReadingTable
+        run={run}
+        fields={headlineFields(run.scenario)}
+        label="Bench readings"
+      />
       <FrameReference scenario={run.scenario} />
       {run.scenario === "stream" &&
       run.results.some((result) => result.drift === null) ? (
@@ -296,7 +273,6 @@ export function SingleRunReadings({ run }: { run: CurrentRun }) {
           drift.
         </p>
       ) : null}
-      <CostLines run={run} />
     </>
   )
 }

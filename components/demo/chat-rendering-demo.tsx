@@ -161,7 +161,7 @@ export function ChatRenderingDemo() {
               spacer. It does this on every visit. This bench keeps{" "}
               <code>useVirtualizer</code>. Heights can come from IndexedDB, the
               server, or prerendered HTML. Read Layout fixed after mount, then
-              the cost line.
+              payload.
             </p>
             <p className="bench-subline">
               10,000 messages. Same <code>@tanstack/react-virtual</code> wrapper
@@ -342,7 +342,7 @@ export function ChatRenderingDemo() {
                 ) : (
                   <p>
                     Run Jump. Layout fixed after mount is the first reading.
-                    Then the cost line.
+                    Then payload.
                   </p>
                 )}
               </div>

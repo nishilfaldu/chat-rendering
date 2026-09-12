@@ -3,7 +3,7 @@ export const SCENARIOS = [
     id: "jump",
     label: "Jump",
     description:
-      "Both panes jump to message 8,000. The left pane guesses heights for unmounted rows and corrects them after landing. The right pane already has those heights. Read Layout fixed after mount first, then the cost line.",
+      "Both panes jump to message 8,000. The left pane guesses heights for unmounted rows and corrects them after landing. The right pane already has those heights. Read Layout fixed after mount first, then payload.",
   },
   {
     id: "reopen",

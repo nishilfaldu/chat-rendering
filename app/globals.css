@@ -754,21 +754,6 @@ body {
   line-height: 1.65;
   max-width: none !important;
 }
-.bench-cost-lines {
-  margin: 18px 0 0;
-  padding: 16px 0 0;
-  border-top: 1px solid #242424;
-  display: grid;
-  gap: 10px;
-}
-.bench-cost-lines li {
-  color: #8a8a8a;
-  font-size: 11px;
-  line-height: 1.5;
-}
-.bench-cost-pane {
-  color: #c4c4c4;
-}
 .bench-tip {
   cursor: help;
   text-decoration: underline dotted #5c5c5c;
@@ -907,5 +892,11 @@ body {
   font-size: 12px;
   cursor: pointer;
 }
-.bench-rendering-details[open] summary { margin-bottom: 16px; }
-.bench-result .bench-frame-reference { max-width: none; font-size: 11px; line-height: 1.7; }
+.bench-rendering-details[open] summary {
+  margin-bottom: 16px;
+}
+.bench-result .bench-frame-reference {
+  max-width: none;
+  font-size: 11px;
+  line-height: 1.7;
+}

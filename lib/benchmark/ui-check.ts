@@ -113,9 +113,38 @@ try {
     await page.$eval(".bench-interpretation", (node) => node.textContent ?? ""),
     /Left pane fixed/
   )
-  assert.match(
-    await page.$eval(".bench-cost-lines", (node) => node.textContent ?? ""),
-    /\+819 KB payload \(gz\).*200,000 precomputed heights/s
+  assert.equal(await page.$(".bench-cost-lines"), null)
+  const payloadRow = await page.$$eval(
+    ".bench-comparison-readings tbody tr",
+    (rows) => {
+      const row = rows.find((candidate) =>
+        (candidate.querySelector("th")?.textContent ?? "").includes(
+          "Payload (gz)"
+        )
+      )
+      return row
+        ? [...row.querySelectorAll("td")].map((cell) => cell.textContent)
+        : null
+    }
+  )
+  assert.deepEqual(payloadRow, ["258 KB", "1,077 KB"])
+  const extraRow = await page.$$eval(
+    ".bench-comparison-readings tbody tr",
+    (rows) => {
+      const row = rows.find((candidate) =>
+        (candidate.querySelector("th")?.textContent ?? "").includes(
+          "Extra payload (gz)"
+        )
+      )
+      return row
+        ? [...row.querySelectorAll("td")].map((cell) => cell.textContent)
+        : null
+    }
+  )
+  assert.deepEqual(extraRow, ["0 KB", "819 KB"])
+  assert.doesNotMatch(
+    await page.$eval(".bench-result", (node) => node.textContent ?? ""),
+    /Cost:/
   )
   await mkdir("/tmp/chat-rendering-checks", { recursive: true })
   await page.screenshot({
