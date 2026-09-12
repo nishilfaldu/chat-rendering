@@ -159,9 +159,9 @@ export function ChatRenderingDemo() {
               TanStack Virtual has no height for a row it has not rendered. It
               guesses 80 px, mounts the row, measures it, and corrects the
               spacer. It does this on every visit. This bench keeps{" "}
-              <code>useVirtualizer</code>. Heights can come from IndexedDB,
-              server tables, or prerendered HTML. Read Layout fixed after mount,
-              then the cost line.
+              <code>useVirtualizer</code>. Heights can come from IndexedDB, the
+              server, or prerendered HTML. Read Layout fixed after mount, then
+              the cost line.
             </p>
             <p className="bench-subline">
               10,000 messages. Same <code>@tanstack/react-virtual</code> wrapper
@@ -182,7 +182,7 @@ export function ChatRenderingDemo() {
             Every pane runs <code>useVirtualizer</code> except the
             no-virtualization control. Only <code>estimateSize</code> and{" "}
             <code>measureElement</code> change. Height before mount is an 80 px
-            guess, a value from IndexedDB, a server table, or prerendered HTML.
+            guess, a value from IndexedDB, the server, or prerendered HTML.
             Costs are gzipped payload, IndexedDB writes, server precompute, and
             stale heights.
           </p>

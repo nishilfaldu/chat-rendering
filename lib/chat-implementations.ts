@@ -22,21 +22,20 @@ export const IMPLEMENTATIONS = {
   "saved-in-browser": {
     label: "Heights this browser already measured (IndexedDB)",
     description:
-      "Reads heights and HTML from IndexedDB after this browser has measured them.",
+      "This browser stores measured heights and reuses them on the next visit.",
     cost: "Cost: IndexedDB reads and writes. Per device. Per width bucket.",
     legacy: ["orbit"],
   },
   "saved-measurements": {
     label: "Heights measured on the server",
-    description:
-      "Ships 20 per-bucket height tables with the page. Binary search for a row at an offset.",
+    description: "Measured heights live on the server and ship with the page.",
     cost: "Cost: extra gzipped payload. 200,000 precomputed heights. Client still re-measures and posts corrections.",
     legacy: ["server-heights"],
   },
   "saved-html": {
     label: "Heights + rendered HTML from the server",
     description:
-      "Same tables plus prerendered HTML. Jump fetches bodies into a 160-entry working set.",
+      "Same server heights plus prerendered HTML. Jump fetches bodies into a 160-entry working set.",
     cost: "Cost: HTML fetch on jump. 160-entry working set.",
     legacy: ["server-index"],
   },

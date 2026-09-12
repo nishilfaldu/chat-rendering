@@ -173,7 +173,7 @@ export function runInterpretation(run: CurrentRun): string {
   if (run.scenario === "jump" && right) {
     const bill =
       right.mode === "saved-measurements" || right.mode === "saved-html"
-        ? `It shipped ${WIDTH_BUCKETS.length} width tables with the page.`
+        ? `It shipped heights for ${WIDTH_BUCKETS.length} widths with the page.`
         : implementationCost(right.mode, extraPayloadKbGz(right.mode)).replace(
             /^Cost: /,
             ""
@@ -185,7 +185,7 @@ export function runInterpretation(run: CurrentRun): string {
     const leftMs = left.elapsed == null ? "-" : `${Math.round(left.elapsed)} ms`
     const rightMs =
       right.elapsed == null ? "-" : `${Math.round(right.elapsed)} ms`
-    return `Left pane appeared in ${leftMs}. Right pane appeared in ${rightMs}. Server heights can appear later because all ${WIDTH_BUCKETS.length} width tables arrive with the page.`
+    return `Left pane appeared in ${leftMs}. Right pane appeared in ${rightMs}. Server heights can appear later because heights for all ${WIDTH_BUCKETS.length} widths arrive with the page.`
   }
 
   if (run.scenario === "scroll") {

@@ -6,7 +6,7 @@ import styles from "./docs.module.css"
 export const metadata: Metadata = {
   title: "Notes · Chat rendering",
   description:
-    "Where each height comes from and what it costs. IndexedDB, server tables, and prerendered HTML.",
+    "Where each height comes from and what it costs. IndexedDB, the server, and prerendered HTML.",
 }
 
 export default function DocsPage() {
@@ -36,10 +36,8 @@ export default function DocsPage() {
           <h2>Heights this browser already measured (IndexedDB)</h2>
           <ul>
             <li>
-              Height comes from IndexedDB. The key is session, message, width
-              bucket, and content hash. Writes wait about 500 ms after the last
-              measurement. <code>CACHE_REVISION</code> drops the store when
-              fonts or layout change.
+              Height comes from IndexedDB. This browser stores measured heights
+              and reuses them on the next visit.
             </li>
             <li>
               Cost is IndexedDB reads and writes on this device, per width
@@ -50,27 +48,27 @@ export default function DocsPage() {
           <h2>Heights measured on the server</h2>
           <ul>
             <li>
-              Height comes from 20 per-bucket offset tables shipped with the
-              page. Binary search finds the row at an offset. The client still
-              re-measures and POSTs corrections to <code>/api/heights</code>.
-              This demo was seeded with a headless browser. A live app would
-              collect those heights from visits.
+              Height comes from measurements on the server. They ship with the
+              page. The client still re-measures and POSTs corrections to{" "}
+              <code>/api/heights</code>. This demo was seeded with a headless
+              browser. A live app would collect those heights from visits.
             </li>
             <li>
               Cost is +819 KB gzipped versus the baseline embed. That is 200,000
               precomputed heights. Time to first content can be later than the
-              baseline because all 20 tables arrive with the page. Shipping one
-              bucket and fetching the rest on resize is untested here.
+              baseline because heights for all 20 widths arrive with the page.
+              Shipping one width and fetching the rest on resize is untested
+              here.
             </li>
           </ul>
 
           <h2>Heights + rendered HTML from the server</h2>
           <ul>
             <li>
-              Height comes from the same tables, plus prerendered HTML for the
-              last 48 messages. The working set is 160 entries. Jump fetches
-              HTML for that range. Placeholders keep row geometry until bodies
-              arrive.
+              Height comes from the same server measurements, plus prerendered
+              HTML for the last 48 messages. The working set is 160 entries.
+              Jump fetches HTML for that range. Placeholders keep row geometry
+              until bodies arrive.
             </li>
             <li>
               Cost is +660 KB gzipped versus the baseline embed, plus fetch
