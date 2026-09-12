@@ -6,7 +6,7 @@ import styles from "./docs.module.css"
 export const metadata: Metadata = {
   title: "Notes · Chat rendering",
   description:
-    "Height and cost for TanStack Virtual, Browser cache (IndexedDB), Precomputed (fetched from server), and Precomputed + baked HTML.",
+    "Height and cost for TanStack Virtual, Browser cache (IndexedDB), Precomputed (fetched from server), and Precomputed + prerendered HTML.",
 }
 
 export default function DocsPage() {
@@ -56,7 +56,7 @@ export default function DocsPage() {
             </li>
           </ul>
 
-          <h2>Precomputed + baked HTML</h2>
+          <h2>Precomputed + prerendered HTML</h2>
           <ul>
             <li>
               Height comes from the same server measurements, plus prerendered

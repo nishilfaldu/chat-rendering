@@ -1,12 +1,9 @@
 import {
   PICKER_IDS,
   IMPLEMENTATIONS,
-  implementationTip,
   type ChatAppId,
 } from "@/lib/chat-implementations"
 import { ChevronDown } from "lucide-react"
-
-import { ReadingTip } from "./reading-tip"
 
 export function ImplementationPicker({
   value,
@@ -42,7 +39,6 @@ export function ImplementationPicker({
         {PICKER_IDS.map((id) => {
           const item = IMPLEMENTATIONS[id]
           const isSelected = id === value
-          const tip = implementationTip(id)
           return (
             <button
               key={id}
@@ -52,13 +48,7 @@ export function ImplementationPicker({
               disabled={disabled}
               onClick={() => onChange(id)}
             >
-              <span className="bench-picker-item-label">
-                {tip ? (
-                  <ReadingTip tip={tip}>{item.label}</ReadingTip>
-                ) : (
-                  item.label
-                )}
-              </span>
+              <span className="bench-picker-item-label">{item.label}</span>
             </button>
           )
         })}

@@ -19,28 +19,6 @@ async function firstReadingLabel(page: Page) {
   })
 }
 
-async function collectReadingTips(page: Page) {
-  const rows = await page.$$(".bench-comparison-readings tbody th")
-  const tips: Record<string, string | null> = {}
-  for (const row of rows) {
-    const label = await row.evaluate((node) => node.textContent ?? "")
-    const tip = await row.$(".bench-tip")
-    if (!tip) {
-      tips[label] = null
-      continue
-    }
-    await tip.hover()
-    await page.waitForSelector(".bench-tip-bubble")
-    tips[label] = await page.$eval(
-      ".bench-tip-bubble",
-      (node) => node.textContent ?? ""
-    )
-    await page.mouse.move(0, 0)
-    await page.waitForSelector(".bench-tip-bubble", { hidden: true })
-  }
-  return tips
-}
-
 const TAB_LINES: Record<string, string> = {
   Jump: "Jump to message 8,000",
   Reopen: "Open the conversation again",
@@ -86,6 +64,7 @@ try {
   assert.doesNotMatch(homeCopy, /\bBaseline\b/)
   assert.doesNotMatch(homeCopy, /Every pane anchors/)
   assert.doesNotMatch(homeCopy, /Drift should stay/)
+  assert.doesNotMatch(homeCopy, /baked HTML/)
   assert.equal(
     await page.$eval(".bench-instruction p", (node) => node.textContent),
     "Jump to message 8,000"
@@ -138,20 +117,28 @@ try {
       "TanStack Virtual",
       "Browser cache (IndexedDB)",
       "Precomputed (fetched from server)",
-      "Precomputed + baked HTML",
+      "Precomputed + prerendered HTML",
     ]
   )
   assert.equal(await page.$(".bench-picker-item-desc"), null)
-  const baked = await page.$(
-    ".bench-picker.is-open .bench-picker-item-label .bench-tip"
+  assert.equal(await page.$(".bench-tip"), null)
+  assert.equal(await page.$(".bench-tip-bubble"), null)
+  const pickerItems = await page.$$(
+    ".bench-picker.is-open .bench-picker-item-label"
   )
-  assert.ok(baked)
-  await baked.hover()
-  await page.waitForSelector(".bench-tip-bubble")
-  assert.equal(
-    await page.$eval(".bench-tip-bubble", (node) => node.textContent),
-    "Prerendered message HTML."
-  )
+  for (const item of pickerItems) {
+    await item.hover()
+    await new Promise((resolve) => setTimeout(resolve, 80))
+    assert.equal(await page.$(".bench-tip-bubble"), null)
+    assert.equal(await page.$(".bench-tip"), null)
+    assert.equal(
+      await item.evaluate((node) => {
+        const host = node.closest("button")
+        return host?.getAttribute("title") ?? node.getAttribute("title")
+      }),
+      null
+    )
+  }
   await page.click("h1")
 
   await page.click(".bench-run")
@@ -215,15 +202,8 @@ try {
   assert.doesNotMatch(resultCopy, /Left pane/)
   assert.doesNotMatch(resultCopy, /Right pane/)
   assert.doesNotMatch(resultCopy, /Extra payload/)
-  const jumpTips = await collectReadingTips(page)
-  assert.deepEqual(jumpTips, {
-    "Layout fixed after mount": "Pixels corrected after rows mounted.",
-    "Rows re-measured": null,
-    "Jump time": null,
-    "Position drift": "Movement of the target after the jump.",
-    "Landing offset": "Distance from the intended top edge.",
-    "Payload, gzipped KB": null,
-  })
+  assert.equal(await page.$(".bench-tip"), null)
+  assert.equal(await page.$(".bench-tip-bubble"), null)
   await mkdir("/tmp/chat-rendering-checks", { recursive: true })
   await page.screenshot({
     path: "/tmp/chat-rendering-checks/desktop.png",
@@ -332,7 +312,7 @@ try {
       "TanStack Virtual",
       "Browser cache (IndexedDB)",
       "Precomputed (fetched from server)",
-      "Precomputed + baked HTML",
+      "Precomputed + prerendered HTML",
     ]
   )
   assert.match(notes, /IndexedDB/)
@@ -353,6 +333,7 @@ try {
   assert.doesNotMatch(notes, /Choosing/)
   assert.doesNotMatch(notes, /\bControls\b/)
   assert.doesNotMatch(notes, /Height sources/)
+  assert.doesNotMatch(notes, /baked HTML/)
   assert.equal(await page.$$eval("article ul", (nodes) => nodes.length), 4)
   assert.equal(
     await page.$$eval(

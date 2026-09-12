@@ -656,27 +656,6 @@ body {
   line-height: 1.8;
   max-width: 36ch;
 }
-.bench-tip {
-  cursor: help;
-  text-decoration: underline dotted #5c5c5c;
-  text-underline-offset: 3px;
-}
-.bench-tip-bubble {
-  position: fixed;
-  z-index: 40;
-  transform: translateY(calc(-100% - 8px));
-  width: max-content;
-  max-width: 220px;
-  padding: 8px 10px;
-  background: #1c1c1c;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #d4d4d4;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.45;
-  pointer-events: none;
-}
 .bench-page :is(button, input):disabled {
   opacity: 0.4;
   cursor: not-allowed;

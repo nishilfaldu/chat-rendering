@@ -4,13 +4,11 @@ import { IMPLEMENTATIONS } from "@/lib/chat-implementations"
 import { PRODUCTION_EMBED_GZ_KB } from "@/lib/payload-costs"
 
 import { formatReading, type RunResult } from "./iframe-probe"
-import { ReadingTip } from "./reading-tip"
 import type { CurrentRun } from "./run-experiment"
 import type { Scenario } from "./scenarios"
 
 type ReadingField = {
   label: string
-  tip?: string
   value: (result: RunResult) => number | null
   unit: string
   digits?: number
@@ -18,7 +16,6 @@ type ReadingField = {
 
 const layoutFixed: ReadingField = {
   label: "Layout fixed after mount",
-  tip: "Pixels corrected after rows mounted.",
   value: (result) => result.correctedPx,
   unit: "px",
 }
@@ -32,7 +29,6 @@ const rowsRemeasured: ReadingField = {
 
 const frameInterval: ReadingField = {
   label: "Frame interval p95",
-  tip: "95th percentile requestAnimationFrame gap.",
   value: (result) => result.frameP95,
   unit: "ms",
 }
@@ -49,7 +45,6 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Time to appear",
-          tip: "Until message content is visible.",
           value: (result) => result.elapsed,
           unit: "ms",
           digits: 0,
@@ -71,13 +66,11 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
         },
         {
           label: "Position drift",
-          tip: "Movement of the target after the jump.",
           value: (result) => result.drift,
           unit: "px",
         },
         {
           label: "Landing offset",
-          tip: "Distance from the intended top edge.",
           value: (result) => result.landing,
           unit: "px",
         },
@@ -90,7 +83,6 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
         longestFrame,
         {
           label: "Reading-position drift",
-          tip: "Movement of a paused message while the last reply grows.",
           value: (result) => result.drift,
           unit: "px",
         },
@@ -99,13 +91,11 @@ function scenarioReadingFields(scenario: Scenario): ReadingField[] {
       return [
         {
           label: "Position shift after resize",
-          tip: "How far the top-visible message moved.",
           value: (result) => result.drift,
           unit: "px",
         },
         {
           label: "Maximum sampled movement",
-          tip: "Peak movement during the resize.",
           value: (result) => result.peakDrift,
           unit: "px",
         },
@@ -149,14 +139,6 @@ function FrameReference({ scenario }: { scenario: Scenario }) {
   ) : null
 }
 
-function ReadingLabel({ field }: { field: ReadingField }) {
-  return field.tip ? (
-    <ReadingTip tip={field.tip}>{field.label}</ReadingTip>
-  ) : (
-    field.label
-  )
-}
-
 function ReadingTable({
   run,
   fields,
@@ -181,9 +163,7 @@ function ReadingTable({
       <tbody>
         {fields.map((field) => (
           <tr key={field.label}>
-            <th scope="row">
-              <ReadingLabel field={field} />
-            </th>
+            <th scope="row">{field.label}</th>
             {run.results.map((result, index) => (
               <td key={index}>{value(field, result)}</td>
             ))}

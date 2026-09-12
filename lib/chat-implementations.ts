@@ -20,7 +20,7 @@ export const IMPLEMENTATIONS = {
     legacy: ["server-heights"],
   },
   "saved-html": {
-    label: "Precomputed + baked HTML",
+    label: "Precomputed + prerendered HTML",
     legacy: ["server-index"],
   },
 } as const
@@ -35,14 +35,6 @@ export const PICKER_IDS = [
   "saved-measurements",
   "saved-html",
 ] as const satisfies readonly ChatAppId[]
-
-const IMPLEMENTATION_TIPS: Partial<Record<ChatAppId, string>> = {
-  "saved-html": "Prerendered message HTML.",
-}
-
-export function implementationTip(id: ChatAppId): string | undefined {
-  return IMPLEMENTATION_TIPS[id]
-}
 
 const LEGACY_TO_ID = Object.fromEntries(
   CHAT_APP_IDS.flatMap((id) =>
