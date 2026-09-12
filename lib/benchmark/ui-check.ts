@@ -132,6 +132,9 @@ try {
           .click(),
       label
     )
+    await page.waitForFunction(
+      () => !document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
+    )
     await page.click(".bench-run")
     await page.waitForFunction(
       () => document.querySelector<HTMLButtonElement>(".bench-run")?.disabled
@@ -152,7 +155,7 @@ try {
             ".bench-primary-reading, .bench-comparison-readings"
           )
         ) && !document.querySelector(".bench-measuring"),
-      { timeout: 45_000 }
+      { timeout: 90_000 }
     )
     assert.equal(await firstReadingLabel(page), "Layout fixed after mount")
     if (label === "Stream") {

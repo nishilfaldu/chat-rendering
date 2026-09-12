@@ -164,8 +164,10 @@ export function ChatRenderingDemo() {
             </p>
             <p className="bench-subline">
               10,000 messages · the same{" "}
-              <code>@tanstack/react-virtual</code> setup in every pane but one
-              control · your machine&apos;s numbers, not mine.
+              <code>@tanstack/react-virtual</code>
+              {" "}
+              setup in every pane but one control · your machine&apos;s numbers,
+              not mine.
             </p>
           </div>
           <Link className="bench-docs-link" href="/docs">

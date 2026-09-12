@@ -158,11 +158,11 @@ function CostLines({ run }: { run: CurrentRun }) {
 }
 
 function pxOf(result: RunResult | undefined) {
-  return result?.correctedPx ?? 0
+  return formatReading(result?.correctedPx ?? 0, "", 1)
 }
 
 function rowsOf(result: RunResult | undefined) {
-  return result?.corrections ?? 0
+  return formatReading(result?.corrections ?? 0, "", 0)
 }
 
 export function runInterpretation(run: CurrentRun): string {
