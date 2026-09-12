@@ -57,8 +57,9 @@ try {
     ["Jump", "Reopen", "Scroll", "Resize", "Stream"]
   )
   assert.equal(
-    await page.$eval('.bench-tabs button[aria-pressed="true"]', (node) =>
-      node.textContent
+    await page.$eval(
+      '.bench-tabs button[aria-pressed="true"]',
+      (node) => node.textContent
     ),
     "Jump"
   )
@@ -66,10 +67,7 @@ try {
     await page.$$eval(".bench-picker-value", (nodes) =>
       nodes.map((node) => node.textContent)
     ),
-    [
-      "TanStack Virtual, measured after mount",
-      "Heights measured on the server",
-    ]
+    ["TanStack Virtual, measured after mount", "Heights measured on the server"]
   )
   assert.equal(
     await page.$$eval(
@@ -81,8 +79,9 @@ try {
   await page.click(".bench-picker-trigger")
   await page.waitForSelector(".bench-picker.is-open .bench-picker-group-label")
   assert.deepEqual(
-    await page.$$eval(".bench-picker.is-open .bench-picker-group-label", (nodes) =>
-      nodes.map((node) => node.textContent)
+    await page.$$eval(
+      ".bench-picker.is-open .bench-picker-group-label",
+      (nodes) => nodes.map((node) => node.textContent)
     ),
     ["Baseline", "Height sources", "Controls"]
   )
@@ -112,7 +111,7 @@ try {
   assert.equal(await firstReadingLabel(page), "Layout fixed after mount")
   assert.match(
     await page.$eval(".bench-interpretation", (node) => node.textContent ?? ""),
-    /Same landing, different bill/
+    /Left pane fixed/
   )
   assert.match(
     await page.$eval(".bench-cost-lines", (node) => node.textContent ?? ""),
@@ -141,7 +140,9 @@ try {
     )
     if (label === "Stream") {
       await new Promise((resolve) => setTimeout(resolve, 120))
-      const bounds = await (await page.$(".bench-chat-wrap iframe"))!.boundingBox()
+      const bounds = await (await page.$(
+        ".bench-chat-wrap iframe"
+      ))!.boundingBox()
       await page.mouse.move(
         bounds!.x + bounds!.width / 2,
         bounds!.y + bounds!.height / 2
@@ -207,13 +208,26 @@ try {
   await page.goto(`${base}/docs`)
   await page.waitForSelector("h1")
   assert.equal(await page.$eval("h1", (node) => node.textContent), "Notes")
-  assert.match(
-    await page.$eval("article", (node) => node.textContent ?? ""),
-    /The baseline you already have/
-  )
-  assert.doesNotMatch(
-    await page.$eval("article", (node) => node.textContent ?? ""),
-    /From a message to pixels/
+  const notes = await page.$eval("article", (node) => node.textContent ?? "")
+  assert.match(notes, /TanStack Virtual, measured after mount/)
+  assert.match(notes, /Heights this browser already measured/)
+  assert.match(notes, /IndexedDB/)
+  assert.match(notes, /Heights measured on the server/)
+  assert.match(notes, /\+819 KB/)
+  assert.match(notes, /Heights \+ rendered HTML from the server/)
+  assert.doesNotMatch(notes, /Reading the numbers/)
+  assert.doesNotMatch(notes, /How to read the numbers/)
+  assert.doesNotMatch(notes, /What every pane shares/)
+  assert.doesNotMatch(notes, /The baseline you already have/)
+  assert.doesNotMatch(notes, /Choosing/)
+  assert.doesNotMatch(notes, /\bControls\b/)
+  assert.equal(await page.$$eval("article ul", (nodes) => nodes.length), 4)
+  assert.equal(
+    await page.$$eval(
+      "nav[aria-label='On this page'], aside.sidebar, .sidebar",
+      (nodes) => nodes.length
+    ),
+    0
   )
 
   await page.goto(base)
