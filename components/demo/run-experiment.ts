@@ -93,18 +93,10 @@ export async function runExperiment({
         }
       }
       if (pending.size && !cancelled.current)
-        throw new Error(
-          "The surface did not finish reopening within 30 seconds."
-        )
+        throw new Error("The pane did not finish reopening within 30 seconds.")
       return results
     }
 
-    if (scenario === "latest")
-      await Promise.all(
-        frames.map((frame) =>
-          frame.contentWindow!.__RAILGUN_BENCH__!.commands.jump(8000)
-        )
-      )
     frames.forEach((frame, index) =>
       finishers.push(track(frame, modes[index]!))
     )
@@ -137,8 +129,8 @@ export async function runExperiment({
           )
         )
       await delay(200)
-    } else if (scenario === "jump" || scenario === "latest") {
-      const index = scenario === "latest" ? 9999 : 8000
+    } else if (scenario === "jump") {
+      const index = 8000
       await Promise.all(
         frames.map(async (frame, pane) => {
           const started = performance.now()
@@ -152,11 +144,10 @@ export async function runExperiment({
                 `[data-message-id="msg_${String(index).padStart(5, "0")}"]`
               )
             if (!row) return null
-            return scenario === "latest"
-              ? row.getBoundingClientRect().bottom -
-                  scroll.getBoundingClientRect().bottom
-              : row.getBoundingClientRect().top -
-                  scroll.getBoundingClientRect().top
+            return (
+              row.getBoundingClientRect().top -
+              scroll.getBoundingClientRect().top
+            )
           }
           const origin = offset()
           let drift: number | null = origin === null ? null : 0

@@ -16,7 +16,7 @@ function wrapCode(
     extraLines <= 0
       ? ""
       : `\n${Array.from({ length: extraLines }, (_, i) => `// fixture row ${i}: value ${intBetween(rng, 1, 9)}`).join("\n")}`
-  return `Here is the relevant part of the implementation.\n\n\`\`\`${sample.lang}\n${sample.text}${pad}\n\`\`\`\n`
+  return `Here is the function I would start with.\n\n\`\`\`${sample.lang}\n${sample.text}${pad}\n\`\`\`\n`
 }
 
 export function generateMessages(): SeedMessage[] {
@@ -36,7 +36,7 @@ export function generateMessages(): SeedMessage[] {
         role: "assistant",
         timestamp: startedAt + i * 1373 + intBetween(rng, 0, 400),
         kind: "code",
-        text: "The reading position is now independent of incoming tokens. This is the part that follows new content:\n\n```ts\nfunction followIfPinned() {\n  if (!pinned.current) return\n  viewport.scrollTop = viewport.scrollHeight\n}\n```\n\nScroll up while this response streams to inspect the history. Jump to the latest message when you want to follow again.",
+        text: "Here is the follow helper that only moves when the reader is already at the bottom:\n\n```ts\nfunction followIfPinned() {\n  if (!pinned.current) return\n  viewport.scrollTop = viewport.scrollHeight\n}\n```\n\nIf you have scrolled into older jobs, incoming lines should leave that row where it is.",
         codeLang: "ts",
         sortIndex: i,
       }
@@ -48,7 +48,7 @@ export function generateMessages(): SeedMessage[] {
         role: asUser ? "user" : "assistant",
         timestamp: startedAt + i * 1373 + intBetween(rng, 0, 400),
         kind: "image",
-        text: `Image placeholder: ${box.width} × ${box.height}. Dimensions are reserved; no image is fetched.`,
+        text: `Screenshot ${box.width} × ${box.height}, captured from the staging dashboard.`,
         imageWidth: box.width,
         imageHeight: box.height,
         sortIndex: i,

@@ -45,7 +45,7 @@ export function formatReading(
   digits = 1
 ) {
   return value == null
-    ? "—"
+    ? "-"
     : `${value.toLocaleString(undefined, { maximumFractionDigits: digits })}${unit}`
 }
 

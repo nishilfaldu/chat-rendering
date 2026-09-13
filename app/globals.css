@@ -242,10 +242,11 @@ body {
   outline-offset: 5px;
 }
 .bench-header p {
-  margin-top: 12px;
-  color: #969696;
-  font-size: 15px;
-  line-height: 1.6;
+  margin-top: 8px;
+  color: #8a8a8a;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 52ch;
 }
 .bench-workbench {
   border: 1px solid #242424;
@@ -284,6 +285,10 @@ body {
   letter-spacing: -0.2px;
   line-height: 1.3;
 }
+.bench-picker-value {
+  text-align: left;
+  white-space: normal;
+}
 .bench-picker-trigger:hover .bench-picker-value,
 .bench-picker-trigger:hover svg {
   color: #fff;
@@ -306,7 +311,8 @@ body {
   left: 0;
   z-index: 30;
   display: none;
-  min-width: max(100%, 280px);
+  min-width: max(100%, 320px);
+  max-width: min(420px, 90vw);
   padding: 6px;
   background: #171717;
   border: 1px solid #2e2e2e;
@@ -316,16 +322,20 @@ body {
   display: block;
 }
 .bench-picker-menu button {
-  display: flex;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  column-gap: 10px;
   width: 100%;
-  align-items: center;
-  gap: 10px;
+  align-items: start;
   padding: 9px 10px;
   border-radius: 5px;
   color: #c8c8c8;
   font-size: 13px;
   line-height: 1.35;
   text-align: left;
+}
+.bench-picker-item-label {
+  grid-column: 2;
 }
 .bench-picker-menu button:hover,
 .bench-picker-menu button:focus-visible {
@@ -337,6 +347,8 @@ body {
 }
 .bench-picker-menu button::before {
   content: "";
+  grid-column: 1;
+  grid-row: 1;
   width: 12px;
   flex-shrink: 0;
   font-size: 11px;
@@ -551,7 +563,7 @@ body {
   overflow-y: auto;
 }
 .bench-body.is-comparing {
-  grid-template-columns: minmax(0, 1fr) 370px;
+  grid-template-columns: minmax(0, 1fr) 400px;
 }
 .bench-comparison-readings {
   width: 100%;
@@ -571,6 +583,7 @@ body {
   text-align: right;
   vertical-align: bottom;
   padding: 0 0 18px 8px;
+  white-space: normal;
 }
 .bench-comparison-readings tbody th {
   font-size: 12px;
@@ -641,28 +654,7 @@ body {
   color: #858585;
   font-size: 13px;
   line-height: 1.8;
-  max-width: 23ch;
-}
-.bench-tip {
-  cursor: help;
-  text-decoration: underline dotted #5c5c5c;
-  text-underline-offset: 3px;
-}
-.bench-tip-bubble {
-  position: fixed;
-  z-index: 40;
-  transform: translateY(calc(-100% - 8px));
-  width: max-content;
-  max-width: 220px;
-  padding: 8px 10px;
-  background: #1c1c1c;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #d4d4d4;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.45;
-  pointer-events: none;
+  max-width: 36ch;
 }
 .bench-page :is(button, input):disabled {
   opacity: 0.4;
@@ -708,8 +700,8 @@ body {
     font-size: 25px;
   }
   .bench-header p {
-    font-size: 14px;
-    max-width: 30ch;
+    font-size: 13px;
+    max-width: none;
   }
   .bench-approach {
     padding: 14px;
@@ -774,5 +766,11 @@ body {
   font-size: 12px;
   cursor: pointer;
 }
-.bench-rendering-details[open] summary { margin-bottom: 16px; }
-.bench-result .bench-frame-reference { max-width: none; font-size: 11px; line-height: 1.7; }
+.bench-rendering-details[open] summary {
+  margin-bottom: 16px;
+}
+.bench-result .bench-frame-reference {
+  max-width: none;
+  font-size: 11px;
+  line-height: 1.7;
+}

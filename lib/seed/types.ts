@@ -2,7 +2,7 @@ export const SESSION_ID = "session-bench-001"
 export const SEED = 20260315
 export const MESSAGE_COUNT = 10_000
 // Bump when fonts, message layout, or generated content change.
-export const CACHE_REVISION = "1"
+export const CACHE_REVISION = "2"
 export const WIDTH_BUCKET_STEP = 32
 export const MIN_WIDTH_BUCKET = 320
 export const MAX_WIDTH_BUCKET = 928
