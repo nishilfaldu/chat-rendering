@@ -4,12 +4,11 @@ import Link from "next/link"
 import { AUTHOR, SITE_NAME, absoluteUrl, serializeJsonLd } from "@/lib/site"
 import styles from "./notes.module.css"
 
-const title = "Chat virtualization notes"
 const description =
   "Height sources and payload costs for TanStack Virtual, browser-cached geometry, server-precomputed measurements, and prerendered HTML."
 
 export const metadata: Metadata = {
-  title,
+  title: { absolute: SITE_NAME },
   description,
   alternates: { canonical: "/notes" },
   openGraph: {
@@ -17,22 +16,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "/notes",
     siteName: SITE_NAME,
-    title,
-    description,
+    title: SITE_NAME,
+    description: "How to render chat better than just virtualization alone.",
     authors: [AUTHOR.url],
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Chat rendering experiment showing geometry and HTML reuse across a virtualized conversation",
+        alt: "Chat rendering. How to render chat better than just virtualization alone.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title,
-    description,
+    title: SITE_NAME,
+    description: "How to render chat better than just virtualization alone.",
     images: ["/opengraph-image"],
   },
   robots: {
