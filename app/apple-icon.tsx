@@ -16,7 +16,29 @@ export default function AppleIcon() {
         background: "#0a0a0a",
       }}
     >
-      <span style={{ color: "#f5f5f5", fontSize: 88 }}>▲</span>
+      <div
+        style={{
+          width: 106,
+          height: 82,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 15,
+          padding: "0 22px",
+          border: "8px solid #f5f5f5",
+          borderRadius: 24,
+        }}
+      >
+        <div style={{ display: "flex", height: 8, background: "#f5f5f5" }} />
+        <div
+          style={{
+            display: "flex",
+            width: 42,
+            height: 8,
+            background: "#a3a3a3",
+          }}
+        />
+      </div>
     </div>,
     size
   )
