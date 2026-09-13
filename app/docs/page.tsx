@@ -1,17 +1,91 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
+import { AUTHOR, SITE_NAME, absoluteUrl, serializeJsonLd } from "@/lib/site"
 import styles from "./docs.module.css"
 
+const title = "Chat virtualization notes"
+const description =
+  "Height sources and payload costs for TanStack Virtual, browser-cached geometry, server-precomputed measurements, and prerendered HTML."
+
 export const metadata: Metadata = {
-  title: "Notes · Chat rendering",
-  description:
-    "Height and cost for TanStack Virtual, Browser cache (IndexedDB), Precomputed (fetched from server), and Precomputed + prerendered HTML.",
+  title,
+  description,
+  alternates: { canonical: "/docs" },
+  openGraph: {
+    type: "article",
+    locale: "en_US",
+    url: "/docs",
+    siteName: SITE_NAME,
+    title,
+    description,
+    authors: [AUTHOR.url],
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Chat rendering experiment showing geometry and HTML reuse across a virtualized conversation",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/opengraph-image"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 }
 
 export default function DocsPage() {
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: "Chat virtualization notes",
+    description,
+    url: absoluteUrl("/docs"),
+    mainEntityOfPage: absoluteUrl("/docs"),
+    author: {
+      "@type": "Person",
+      name: AUTHOR.name,
+      url: AUTHOR.url,
+    },
+    publisher: {
+      "@type": "Person",
+      name: AUTHOR.name,
+      url: AUTHOR.url,
+    },
+    isPartOf: {
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: absoluteUrl(),
+    },
+    about: [
+      "Virtual scrolling",
+      "Chat rendering",
+      "Web performance",
+      "TanStack Virtual",
+    ],
+    inLanguage: "en-US",
+  }
+
   return (
     <main className={styles.page}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
+      />
       <div className={styles.shell}>
         <header className={styles.header}>
           <Link href="/">Chat rendering</Link>
