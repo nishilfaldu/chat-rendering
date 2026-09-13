@@ -7,9 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import {
   AUTHOR,
   REPOSITORY_URL,
-  SITE_DESCRIPTION,
   SITE_NAME,
-  SITE_TITLE,
   SITE_URL,
   absoluteUrl,
   serializeJsonLd,
@@ -25,11 +23,8 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: `${SITE_TITLE} · ${SITE_NAME}`,
-    template: `%s · ${SITE_NAME}`,
-  },
-  description: SITE_DESCRIPTION,
+  title: { absolute: SITE_NAME },
+  description: "How to render chat better than just virtualization alone.",
   applicationName: SITE_NAME,
   authors: [AUTHOR],
   creator: AUTHOR.name,
@@ -69,9 +64,8 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
-    alternateName: SITE_TITLE,
     url: absoluteUrl(),
-    description: SITE_DESCRIPTION,
+    description: "How to render chat better than just virtualization alone.",
     author: {
       "@type": "Person",
       name: AUTHOR.name,
