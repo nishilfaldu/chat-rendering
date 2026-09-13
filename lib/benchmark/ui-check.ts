@@ -300,7 +300,7 @@ try {
     fullPage: true,
   })
 
-  await page.goto(`${base}/docs`)
+  await page.goto(`${base}/notes`)
   await page.waitForSelector("h1")
   assert.equal(await page.$eval("h1", (node) => node.textContent), "Notes")
   const notes = await page.$eval("article", (node) => node.textContent ?? "")

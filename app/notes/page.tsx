@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 import { AUTHOR, SITE_NAME, absoluteUrl, serializeJsonLd } from "@/lib/site"
-import styles from "./docs.module.css"
+import styles from "./notes.module.css"
 
 const title = "Chat virtualization notes"
 const description =
@@ -11,11 +11,11 @@ const description =
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: "/docs" },
+  alternates: { canonical: "/notes" },
   openGraph: {
     type: "article",
     locale: "en_US",
-    url: "/docs",
+    url: "/notes",
     siteName: SITE_NAME,
     title,
     description,
@@ -48,14 +48,14 @@ export const metadata: Metadata = {
   },
 }
 
-export default function DocsPage() {
+export default function NotesPage() {
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     headline: "Chat virtualization notes",
     description,
-    url: absoluteUrl("/docs"),
-    mainEntityOfPage: absoluteUrl("/docs"),
+    url: absoluteUrl("/notes"),
+    mainEntityOfPage: absoluteUrl("/notes"),
     author: {
       "@type": "Person",
       name: AUTHOR.name,

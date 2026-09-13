@@ -154,7 +154,7 @@ export function ChatRenderingDemo() {
             <h1>Chat rendering</h1>
             <p>How to render chat better than just virtualization alone.</p>
           </div>
-          <Link className="bench-docs-link" href="/docs">
+          <Link className="bench-docs-link" href="/notes">
             Notes
           </Link>
         </header>
