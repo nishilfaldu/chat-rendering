@@ -7,7 +7,7 @@ import {
   conversationPath,
   type ChatAppId,
 } from "@/lib/chat-implementations"
-import { ArrowDown, Github, Play, Square } from "lucide-react"
+import { ArrowDown, Play, Square } from "lucide-react"
 
 import { ImplementationPicker } from "./implementation-picker"
 import {
@@ -161,7 +161,6 @@ export function ChatRenderingDemo() {
               target="_blank"
               rel="noreferrer"
             >
-              <Github aria-hidden="true" size={14} strokeWidth={1.75} />
               GitHub
             </a>
             <Link className="bench-docs-link" href="/notes">
