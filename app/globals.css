@@ -235,7 +235,6 @@ body {
 .bench-docs-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   color: #a3a3a3;
   font-size: 14px;
   white-space: nowrap;
@@ -485,7 +484,6 @@ body {
 .bench-stop {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   font-size: 13px;
   cursor: pointer;
 }
