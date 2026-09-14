@@ -227,7 +227,15 @@ body {
   font-weight: 500;
   letter-spacing: -0.8px;
 }
+.bench-header-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
 .bench-docs-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #a3a3a3;
   font-size: 14px;
   white-space: nowrap;
