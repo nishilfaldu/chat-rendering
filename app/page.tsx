@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     description: "How to render chat better than just virtualization alone.",
     images: [
       {
-        url: "/opengraph-image",
+        url: "https://chat-rendering.nishilfaldu.site/og-image.png",
         width: 1200,
         height: 630,
         alt: "Chat rendering. How to render chat better than just virtualization alone.",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SITE_NAME,
     description: "How to render chat better than just virtualization alone.",
-    images: ["/opengraph-image"],
+    images: [{ url: "https://chat-rendering.nishilfaldu.site/og-image.png", alt: "Chat rendering. How to render chat better than just virtualization alone." }],
   },
   robots: {
     index: true,
