@@ -7,7 +7,7 @@ import {
   conversationPath,
   type ChatAppId,
 } from "@/lib/chat-implementations"
-import { ArrowDown, Play, Square } from "lucide-react"
+import { ArrowDown, Github, Play, Square } from "lucide-react"
 
 import { ImplementationPicker } from "./implementation-picker"
 import {
@@ -154,9 +154,20 @@ export function ChatRenderingDemo() {
             <h1>Chat rendering</h1>
             <p>How to render chat better than just virtualization alone.</p>
           </div>
-          <Link className="bench-docs-link" href="/notes">
-            Notes
-          </Link>
+          <nav className="bench-header-links" aria-label="Project links">
+            <a
+              className="bench-docs-link"
+              href="https://github.com/nishilfaldu/chat-rendering"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Github aria-hidden="true" size={14} strokeWidth={1.75} />
+              GitHub
+            </a>
+            <Link className="bench-docs-link" href="/notes">
+              Notes
+            </Link>
+          </nav>
         </header>
         <section className="bench-workbench" aria-label="Chat rendering bench">
           <div className={`bench-approach ${compare ? "is-comparing" : ""}`}>
