@@ -154,9 +154,19 @@ export function ChatRenderingDemo() {
             <h1>Chat rendering</h1>
             <p>How to render chat better than just virtualization alone.</p>
           </div>
-          <Link className="bench-docs-link" href="/notes">
-            Notes
-          </Link>
+          <nav className="bench-header-links" aria-label="Project links">
+            <a
+              className="bench-docs-link"
+              href="https://github.com/nishilfaldu/chat-rendering"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
+            <Link className="bench-docs-link" href="/notes">
+              Notes
+            </Link>
+          </nav>
         </header>
         <section className="bench-workbench" aria-label="Chat rendering bench">
           <div className={`bench-approach ${compare ? "is-comparing" : ""}`}>
